@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Neutral media placeholder</title>
+  <desc id="desc">A generic media frame, play symbol, caption lines, and document fallback motif.</desc>
+  <rect width="1280" height="720" fill="#F7F4EE"/>
+  <rect x="90" y="80" width="1100" height="560" rx="28" fill="#FFFFFF" stroke="#858B7D" stroke-width="10"/>
+  <circle cx="430" cy="330" r="105" fill="#EFEAE0" stroke="#315C4B" stroke-width="12"/>
+  <path d="M405 270 L500 330 L405 390 Z" fill="#315C4B"/>
+  <path d="M650 250 h360 M650 315 h300 M650 380 h340" stroke="#62675F" stroke-width="18" stroke-linecap="round"/>
+  <path d="M650 470 h210 v105 h-210 z M685 505 h140 M685 540 h105" fill="#EFEAE0" stroke="#858B7D" stroke-width="8" stroke-linecap="round"/>
+</svg>

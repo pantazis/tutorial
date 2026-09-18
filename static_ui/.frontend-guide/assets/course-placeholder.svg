@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Neutral course placeholder</title>
+  <desc id="desc">Abstract paper shapes and a quiet horizon used only as a prototype fallback.</desc>
+  <rect width="1600" height="900" fill="#F7F4EE"/>
+  <rect x="180" y="155" width="520" height="520" rx="36" fill="#EFEAE0" stroke="#858B7D" stroke-width="8"/>
+  <rect x="790" y="225" width="520" height="420" rx="36" fill="#FFFFFF" stroke="#C8CBBF" stroke-width="8"/>
+  <path d="M120 650 C420 520 650 710 940 585 C1160 490 1350 545 1510 465" fill="none" stroke="#315C4B" stroke-width="18"/>
+  <path d="M665 350 h270 v210 h-270 z M700 395 h200 M700 445 h160 M700 495 h185" fill="#FFFFFF" stroke="#62675F" stroke-width="10" stroke-linecap="round"/>
+</svg>
