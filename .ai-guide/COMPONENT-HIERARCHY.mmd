@@ -1,0 +1,105 @@
+flowchart TD
+    APP[Application]
+
+    APP --> PUB[PublicShell]
+    APP --> AUTH[AuthShell]
+    APP --> LEARN[LearnerShell]
+    APP --> COURSE[CourseShell]
+    APP --> ADMIN[AdminShell]
+    APP --> PREVIEW[PreviewShell]
+
+    PUB --> PGC[PG-PUBLIC-CONTINUE]
+    AUTH --> PGA[PG-AUTH]
+    AUTH --> PGR[PG-ROLE-LANDING]
+
+    LEARN --> PGMC[PG-MY-COURSE]
+    LEARN --> PGP[PG-PROFILE]
+    LEARN --> PGMP[PG-MY-PROGRESS]
+    LEARN --> PGN[PG-NOTIFICATIONS]
+    LEARN --> PGH[PG-HELP]
+    LEARN --> PGQH[PG-QUIZ-HISTORY]
+
+    COURSE --> PGCO[PG-COURSE]
+    COURSE --> PGL[PG-LESSON]
+    COURSE --> PGT[PG-TUTORIAL]
+    COURSE --> PGM[PG-MEDITATION]
+    COURSE --> PGQ[PG-QUIZ]
+    COURSE --> PGQR[PG-QUIZ-RESULT]
+    COURSE --> PGQH
+
+    ADMIN --> PGAH[PG-ADMIN-HOME]
+    ADMIN --> PGACS[PG-ADMIN-COURSES]
+    ADMIN --> PGAC[PG-ADMIN-COURSE]
+    ADMIN --> PGAL[PG-ADMIN-LESSON]
+    ADMIN --> PGAG[PG-ADMIN-GOVERNANCE]
+    ADMIN --> PGALS[PG-ADMIN-LEARNERS]
+    ADMIN --> PGALR[PG-ADMIN-LEARNER]
+    ADMIN --> PGRS[PG-RESET]
+    ADMIN --> PGREP[PG-REPORTS]
+    ADMIN --> PGAM[PG-ADMIN-MGMT]
+    PREVIEW --> PGAP[PG-ADMIN-PREVIEW]
+
+    SHARED[Major shared components]
+    PH[PageHeader / context headers]
+    RN[ResultNotice / EmptyState]
+    SB[StatusBadge / ProgressSummary / RequirementLabel / Timestamp]
+    FE[AccountForm / FormErrorSummary]
+    CV[CourseCard / CourseOutline / LessonCard / LessonItemList]
+    LI[ContentBlocks / MediaFrame / ItemNavigation]
+    QV[QuizAttemptForm / QuizResult / AttemptHistory]
+    AV[FilterBar / DataView / OrderEditor]
+    GV[GovernanceTimeline / PublicationBlockers / ImpactPreview / ConfirmDialog]
+
+    SHARED --> PH
+    SHARED --> RN
+    SHARED --> SB
+    SHARED --> FE
+    SHARED --> CV
+    SHARED --> LI
+    SHARED --> QV
+    SHARED --> AV
+    SHARED --> GV
+
+    PGA --> FE
+    PGA --> RN
+    PGMC --> PH
+    PGMC --> CV
+    PGMC --> SB
+    PGMC --> RN
+    PGP --> PH
+    PGP --> RN
+    PGMP --> PH
+    PGMP --> SB
+    PGN --> PH
+    PGN --> RN
+    PGH --> PH
+    PGCO --> CV
+    PGCO --> SB
+    PGL --> CV
+    PGL --> SB
+    PGT --> LI
+    PGT --> RN
+    PGM --> LI
+    PGM --> RN
+    PGQ --> QV
+    PGQ --> FE
+    PGQR --> QV
+    PGQH --> QV
+    PGAH --> PH
+    PGACS --> AV
+    PGACS --> RN
+    PGAC --> AV
+    PGAC --> RN
+    PGAL --> AV
+    PGAL --> RN
+    PGAG --> GV
+    PGAP --> CV
+    PGALS --> AV
+    PGALS --> RN
+    PGALR --> AV
+    PGALR --> QV
+    PGRS --> GV
+    PGREP --> AV
+    PGREP --> RN
+    PGAM --> AV
+    PGAM --> GV
