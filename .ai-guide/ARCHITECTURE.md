@@ -8,9 +8,34 @@ Dependency direction: `UI/adapters → server-only application services → doma
 
 ## GATE-REPO-001 — Production source authority
 
-The checkout at `C:\Users\pvast\Desktop\tutorial` is currently a modified `PROTOTYPE_ONLY` static package, not evidenced production source. `T-001` must locate/import the real application or obtain explicit bootstrap authority. Until then, exact physical routes, layouts, schema/table names, database library, migration runner, localization/style/test systems, Docker shape, cookie domain, media storage/CSP, mail transport, and deployment configuration are `BLOCKED`.
+`GATE-REPO-001` was resolved on September 28, 2026 by explicit owner authority to create a new production baseline in `C:\Users\pvast\Desktop\tutorial` and to choose compatible physical conventions within the fixed Next.js 16, React 19, TypeScript 5.9, PostgreSQL, and Docker-only constraints. The existing Git repository and its history remain authoritative; there is no separate production source to import.
 
-Logical ownership and invariants below are stable and must be mapped onto confirmed host conventions. Preserve all user changes. Prototype flow/accessibility evidence may be reused; fixtures, identities, outcomes, selectors, content, and persistence may not.
+The approved baseline below is now the host contract. Preserve all existing user changes. Former prototype flow/accessibility evidence may be reused only if recovered from history and reviewed; fixtures, identities, outcomes, selectors, content, and persistence remain non-authoritative.
+
+## Approved production baseline and integration map
+
+| Concern | Approved physical convention |
+|---|---|
+| Repository/application root | `C:\Users\pvast\Desktop\tutorial`; one application and one authoritative `.git` directory. Production source is created in place without rewriting history. |
+| Runtime/framework | Node.js 24 LTS-compatible pinned container image; Next.js 16 App Router; React 19; TypeScript 5.9 strict mode. Exact compatible patch versions and image digests are locked and evidenced by `T-002`. |
+| Package management | npm with committed `package-lock.json`; reproducible `npm ci` only inside Docker Compose services. |
+| Application routes | `src/app`; localized public/auth/learner/course route groups under `src/app/[locale]`; English-only administration under `src/app/admin`; request adapters use colocated route handlers or server actions without a second backend. |
+| Shells and presentation | `src/components/shells`, `src/components/ui`, and feature-local components under `src/features/<owner>/components`; Server Components by default, Client Components only at interaction boundaries. |
+| Domain/application code | `src/features/<owner>/domain`, `src/features/<owner>/application`, and `src/features/<owner>/server`; cross-feature shared server policy in `src/server`. Browser modules do not import server-only modules. |
+| PostgreSQL access | Minimal parameterized `pg` adapter in `src/server/db`; explicit transaction helpers and repository modules. No ORM or schema push. PostgreSQL names are introduced only by the owning reviewed migration task. |
+| SQL migrations | Ordered forward SQL in `db/migrations`; checks/fixtures in `db/checks` and `db/fixtures`; a small Docker-run migration/verification runner under `scripts/db`. Migration history is append-only. |
+| Authentication/cookies | First-party opaque sessions implemented under `src/features/identity`; only token hashes persist. Next.js server cookie adapters use `HttpOnly`, `SameSite=Lax`, path `/`, and `Secure` in production. Host-only cookies are the baseline; a wider cookie domain requires deployment authority. |
+| Localization | Typed EL/EN JSON dictionaries under `src/locales`; locale parsing/loading in `src/i18n`; canonical learner locale segment is `el|en`. Account/course language rules remain server authoritative. No external translation service. |
+| Styling | SCSS global semantic tokens in `src/styles`; shell/layout/state partials plus colocated `*.module.scss` component/page styles. No runtime CSS-in-JS or utility framework. |
+| Validation | Allowlisted server schemas use Zod at request/command boundaries; domain invariants and PostgreSQL constraints remain authoritative. |
+| Tests | Vitest for domain/service/integration tests, React Testing Library for components/adapters, and Playwright for browser/accessibility/responsive evidence. Test support lives in `tests` with feature-local unit tests allowed beside source. |
+| Docker/operations | Root `Dockerfile` and `compose.yaml`; services/one-shots for application, internal PostgreSQL, migration, lint, typecheck, tests, build, backup, restore validation, and teardown. Optional Mailpit is development/test only. PostgreSQL has no published host port; production runtime is non-root. |
+| Mail | Narrow `src/server/mail` interface with SMTP adapter and Mailpit for local evidence. `GATE-MAIL-001` continues to block production provider/sender/retry policy. |
+| Media/CSP | Media presentation and metadata live behind `src/server/media` and `MediaFrame`. No external origin or storage provider is approved; CSP begins same-origin and fail-closed. Provider/origin additions require explicit authority and review. |
+| Deployment/secrets | Environment schema and examples may document names only; secrets stay untracked. No cloud platform, public database, cookie domain, or infrastructure controls are assumed. Deployment-specific decisions remain explicit blockers until supplied. |
+| Privacy | Export/policy boundaries may be implemented, but destructive deletion/retention remains blocked by `GATE-PRIVACY-001`. |
+
+Every logical owner below maps to `src/features/<owner>` plus its approved shared adapters. `T-002` establishes only the reproducible host baseline; later tasks introduce schema, routes, and behavior according to their own contracts.
 
 ## Module ownership
 

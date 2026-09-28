@@ -4,7 +4,7 @@
 
 Complete one task at a time. A task is complete only after all `VERIFY` evidence succeeds. On success, change `[ ]` to `[x]`, append concise evidence under that task, and project its dependency-ready `NEXT` task into `CURRENT-TASK.md`. On failure or missing authority, leave it unchecked and keep it current with a blocker and recovery condition.
 
-### [ ] T-001 — Resolve production repository authority and integration map
+### [x] T-001 — Resolve production repository authority and integration map
 
 - **GOAL:** Establish the authoritative production source and exact host conventions required for merge-safe implementation.
 - **DEPENDENCIES:** none.
@@ -16,6 +16,8 @@ Complete one task at a time. A task is complete only after all `VERIFY` evidence
 - **VERIFY:** Show clean evidence of source authority; Git status proves prior changes preserved; identified files prove Next.js/PostgreSQL/migration/localization/style/test/Docker conventions or the approved bootstrap baseline; every downstream logical owner has a physical mapping or explicit blocker.
 - **DONE_WHEN:** `GATE-REPO-001` is resolved with a reviewed host map and no unapproved repository mutation.
 - **NEXT:** `T-002`.
+
+**Verification evidence — September 28, 2026:** Owner explicitly authorized a new baseline and compatible stack selection. Git inspection found only `main`, no tags or alternate production refs/repositories, and no application/config baseline. `ARCHITECTURE.md` now maps runtime, routes, modules, PostgreSQL, ordered SQL migrations, auth/cookies, localization, styles, validation, tests, Docker, mail/media, deployment, and privacy gates; `FRONTEND.md` maps route families and styling. The pre-existing `.clinerules/rules.md` modification was hash/diff checked and not edited. Documentation checks and scoped Git diff passed; commit evidence is recorded in repository history.
 
 ### [ ] T-002 — Establish Docker-only application, database, migration, and check baseline
 

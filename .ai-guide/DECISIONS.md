@@ -11,12 +11,9 @@
 - `AD-007`: Persist randomized quiz order in the attempt snapshot; do not recompute it later.
 - `AD-008`: Reset confirmation recomputes impact and detects stale previews; preview is never mutation authority.
 - `AD-009`: Materialize publication notifications per recipient at event time so preference changes cannot rewrite history.
+- `AD-010`: Owner authority on September 28, 2026 establishes `C:\Users\pvast\Desktop\tutorial` as a new production baseline and authorizes compatible physical stack choices within the fixed guide constraints. Use npm/lockfile, `src/app`, minimal `pg`, ordered SQL, first-party opaque sessions, typed JSON localization, SCSS modules, Vitest/Testing Library/Playwright, and Docker Compose as mapped in `ARCHITECTURE.md`.
 
 ## Unresolved gates
-
-### GATE-REPO-001
-
-Production source or explicit bootstrap authority is missing. `T-001` must resolve it before product implementation. Blocked choices include physical routes/files, database/migration libraries, localization, CSS, tests, Docker commands/images, cookie domain, media/CSP, mail integration, deployment, and infrastructure controls.
 
 ### GATE-PRIVACY-001
 
@@ -32,9 +29,11 @@ The subject does not authorize automatic migration of active learners when a new
 
 ## Confirmed repository evidence
 
-- `C:\Users\pvast\Desktop\tutorial` is branch `main`, one commit ahead of origin, with uncommitted user changes that must be preserved.
-- The checkout contains workflow/prototype material but no evidenced root production manifest, Next.js tree, SQL migrations, or Compose baseline.
-- `static_ui` is `PROTOTYPE_ONLY`. It may inform flows, archetypes, semantic roles, and accessibility; it may not define production schema, identity, authorization, persistence, seeds, outcomes, or spiritual curriculum.
+- On September 28, 2026, `C:\Users\pvast\Desktop\tutorial` was branch `main` at `b9dc2f6`, one commit ahead of `origin/main` at `81a7342`; `origin` exposes only `main`, no tags, and no production source on another ref.
+- The checkout contains canonical workflow material and scripts but no root production manifest, Next.js tree, SQL migrations, Dockerfile, Compose file, or alternate local Git repository under the Desktop search scope.
+- The owner explicitly authorized creation of a new production baseline in this repository and authorized compatible physical stack selection within the guide's fixed constraints. `GATE-REPO-001` is therefore resolved; the approved host map is in `ARCHITECTURE.md` and `FRONTEND.md`.
+- The existing uncommitted change to `.clinerules/rules.md` predates baseline creation and must remain untouched and uncommitted by implementation tasks unless the owner separately directs otherwise.
+- Removed `static_ui` history remains `PROTOTYPE_ONLY`. If consulted, it may inform flows, archetypes, semantic roles, and accessibility only; it may not define production schema, identity, authorization, persistence, seeds, outcomes, selectors, or spiritual curriculum.
 
 ## Rejected alternatives
 

@@ -39,17 +39,9 @@ Do not load or redesign the whole project when the current task identifies a nar
 
 ## Current project gate
 
-`T-001` is currently the active task and is marked `STATUS: BLOCKED` in `.ai-guide\CURRENT-TASK.md` because the production application is not present and explicit bootstrap authority has not been recorded.
+`GATE-REPO-001` was resolved on September 28, 2026 by explicit user authority to create a new production baseline in `C:\Users\pvast\Desktop\tutorial` and choose a compatible physical stack within the fixed guide constraints. `T-001` is complete; the reviewed host map is canonical in `.ai-guide\ARCHITECTURE.md` and `.ai-guide\FRONTEND.md`.
 
-Until `GATE-REPO-001` is resolved:
-
-- Do not start `T-002` or any later task.
-- Do not invent physical routes, folders, schema or table names, database libraries, migration tooling, authentication/cookie implementation, localization library, styling system, test framework, Docker topology, mail provider, media storage, CSP, deployment configuration, or infrastructure controls.
-- Do not bootstrap a new production application merely because the directory is empty or prototype-only.
-- Resolve the gate only by importing/identifying the authoritative production repository or by obtaining explicit user authority to create a new baseline and choose its physical stack.
-- After authority is supplied, rerun `T-001`, inspect the resulting host, and document the exact integration map before implementation proceeds.
-
-The statement that the project will be created in this folder establishes the target location. It does not, by itself, authorize unlisted technology or infrastructure choices when multiple valid options exist.
+`T-002` is the only dependency-ready task. Follow `.ai-guide\CURRENT-TASK.md`; do not begin later tasks, alter the approved baseline without new authority, or treat removed prototype history as production authority.
 
 ## Task execution rules
 
