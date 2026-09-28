@@ -10,11 +10,13 @@ import type { CourseRevisionInput } from "@/server/course/types";
 import { LearningService } from "@/server/learning/service";
 import { QuizService } from "@/server/quiz/service";
 import type { QuizAttempt, QuizRevealPolicy } from "@/server/quiz/types";
+import { ResetService } from "@/server/reset/service";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const identity = new IdentityService(pool);
 const courses = new CourseService(pool);
 const learning = new LearningService(pool);
+const resets = new ResetService(pool);
 const password = "A-strong-test-password-123";
 
 async function createAccount(email: string) {
@@ -166,6 +168,29 @@ function sequenceRandom(values: number[]) {
   return () => values[index++ % values.length];
 }
 
+async function resetQuiz(
+  administratorToken: string,
+  learnerAccountId: string,
+  courseId: string,
+  quizItemId: string,
+  reason: string,
+  waitSeconds = 0,
+) {
+  const preview = await resets.preview(administratorToken, {
+    learnerAccountId,
+    courseId,
+    scope: "quiz",
+    targetId: quizItemId,
+    waitSeconds,
+  });
+  if (!preview.ok) throw new Error(preview.message);
+  return resets.confirm(administratorToken, {
+    previewId: preview.value.previewId,
+    fingerprint: preview.value.fingerprint,
+    reason,
+  });
+}
+
 beforeEach(async () => {
   await pool.query(
     `TRUNCATE quiz_submitted_answers, quiz_attempt_options, quiz_attempt_questions, quiz_attempts, quiz_cycles,
@@ -296,13 +321,13 @@ describe("immutable server-graded quiz attempts", () => {
       quiz.submitAttempt(learner.sessionToken, published.courseId, quizItemId, started.value.id, valid),
     ).resolves.toMatchObject({ ok: false, code: "conflict" });
 
-    const reset = await quiz.resetCycle(admin.sessionToken, {
-      learnerAccountId: learner.accountId,
-      courseId: published.courseId,
+    const reset = await resetQuiz(
+      admin.sessionToken,
+      learner.accountId,
+      published.courseId,
       quizItemId,
-      reason: "Create a new immutable cycle for stale submission coverage.",
-      waitSeconds: 0,
-    });
+      "Create a new immutable cycle for stale submission coverage.",
+    );
     expect(reset.ok).toBe(true);
     await expect(
       quiz.submitAttempt(learner.sessionToken, published.courseId, quizItemId, started.value.id, valid),
@@ -345,26 +370,27 @@ describe("immutable server-graded quiz attempts", () => {
     const exhaustedHistory = await quiz.learnerHistory(learner.sessionToken, published.courseId, quizItemId);
     expect(exhaustedHistory.ok && exhaustedHistory.value.every((attempt) => attempt.correctOptionIds !== null)).toBe(true);
 
-    const delayed = await quiz.resetCycle(admin.sessionToken, {
-      learnerAccountId: learner.accountId,
-      courseId: published.courseId,
+    const delayed = await resetQuiz(
+      admin.sessionToken,
+      learner.accountId,
+      published.courseId,
       quizItemId,
-      reason: "Apply a server-time eligibility delay.",
-      waitSeconds: 60,
-    });
-    expect(delayed).toMatchObject({ ok: true, value: { cycleNumber: 2 } });
+      "Apply a server-time eligibility delay.",
+      60,
+    );
+    expect(delayed).toMatchObject({ ok: true, value: { afterReference: { cycleNumber: 2 } } });
     await expect(quiz.startAttempt(learner.sessionToken, published.courseId, quizItemId)).resolves.toMatchObject({
       ok: false,
       code: "conflict",
     });
-    const immediate = await quiz.resetCycle(admin.sessionToken, {
-      learnerAccountId: learner.accountId,
-      courseId: published.courseId,
+    const immediate = await resetQuiz(
+      admin.sessionToken,
+      learner.accountId,
+      published.courseId,
       quizItemId,
-      reason: "Authorized replacement of the delayed cycle.",
-      waitSeconds: 0,
-    });
-    expect(immediate).toMatchObject({ ok: true, value: { cycleNumber: 3 } });
+      "Authorized replacement of the delayed cycle.",
+    );
+    expect(immediate).toMatchObject({ ok: true, value: { afterReference: { cycleNumber: 3 } } });
     const thirdCycleAttempt = await quiz.startAttempt(learner.sessionToken, published.courseId, quizItemId);
     expect(thirdCycleAttempt).toMatchObject({ ok: true, value: { cycleNumber: 3, attemptNumber: 1 } });
 

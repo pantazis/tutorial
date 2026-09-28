@@ -7,6 +7,7 @@ import type { Pool, PoolClient } from "pg";
 import { loadAuthenticated } from "@/server/auth/service";
 import type { ServiceResult } from "@/server/auth/types";
 import { withTransaction } from "@/server/db/transaction";
+import { materializePublicationNotifications } from "@/server/notifications/service";
 
 import { CourseRepository } from "./repository";
 import type { CourseItemInput, CourseReadModel, CourseRevisionInput, StoredCourseRevision } from "./types";
@@ -199,6 +200,7 @@ export class CourseService {
          VALUES ($1, $2, $3, 'published', $4)`,
         [randomUUID(), courseId, revisionId, actor.accountId],
       );
+      await materializePublicationNotifications(client, courseId, revisionId);
       await audit(client, courseId, revisionId, actor.accountId, "course_published", { version: expectedVersion });
       return { ok: true, value: null };
     });

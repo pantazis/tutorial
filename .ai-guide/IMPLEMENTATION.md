@@ -94,7 +94,7 @@ Complete one task at a time. A task is complete only after all `VERIFY` evidence
 
 **Verification evidence — September 28, 2026:** Ordered migration `0005_quiz_attempts.sql` and its post-check passed through Docker Compose (`migrate`: 5 migrations verified; `migration-smoke`: passed). The focused deterministic quiz integration suite passed all 4 cases, covering persisted randomized question/option snapshots and stable open-attempt replay, all supported question types, pass thresholds and Required-item completion, invalid/stale/duplicate/cross-attempt answer rejection, finite exhaustion, reveal policies, server-time waits, post-Pass lockout, immutable reset-cycle history, Unlimited attempts, learner isolation, and authorized administrator answer history. The complete Vitest result was 6 files/44 tests passed. ESLint passed with zero warnings, TypeScript passed, Compose configuration and `git diff --check` passed, and the multi-stage production image built and ran successfully as non-root user `nextjs`, image `sha256:edf1cec3c31e981aede3f8b1156abba9988be8b65a83f5d09a67687d2a599ec4`.
 
-### [ ] T-007 — Implement notifications, reset transactions, learner oversight, and factual reporting services
+### [x] T-007 — Implement notifications, reset transactions, learner oversight, and factual reporting services
 
 - **GOAL:** Provide audited non-destructive resets, immutable notifications, privacy-safe learner lookup, and factual reporting.
 - **DEPENDENCIES:** `T-006`.
@@ -106,6 +106,8 @@ Complete one task at a time. A task is complete only after all `VERIFY` evidence
 - **VERIFY:** Tests cover preference-at-event notification targeting/history, chronological empty-state data, quiz/lesson/course impact preview, stale conflict, dependent-only recalculation, unrelated-course preservation, immutable history, reason/audit fields, atomic notification, authorized answer access, allowed/forbidden filters, noncompetitive aggregates, export scope, and deletion fail-closed behavior.
 - **DONE_WHEN:** Resets and administrative reads are transactional, auditable, privacy-bounded, and cannot rewrite unrelated or historical facts.
 - **NEXT:** `T-008`.
+
+**Verification evidence — September 28, 2026:** Ordered migration `0006_notifications_resets_and_oversight.sql` and its post-check passed through Docker Compose (`migrate`: 6 migrations verified; `migration-smoke`: passed). The focused notification/reset/oversight suite passed all 4 cases, covering publication and update targeting by preferred language at event time, immutable chronological history and empty state, quiz/lesson/course previews, stale-preview rejection, dependent-only recalculation, unrelated-course preservation, immutable generations/attempts/audits, required reasons and before/after references, atomic learner reset notification, factual filters and aggregates, authorized answer access with audit, own-data export scope, and deletion fail-closed behavior under `GATE-PRIVACY-001`. Legacy quiz reset coverage was migrated to the preview/confirm service and the direct reset bypass was removed. The complete Vitest result was 7 files/48 tests passed. ESLint passed with zero warnings, TypeScript passed, Compose configuration and `git diff --check` passed, and the multi-stage production image built and ran successfully as non-root user `nextjs`, image `sha256:2bea7ea274e9ed602fb8f203725ea5542c1a24f79f5a84b2b0b27d637dc81aa7`.
 
 ### [ ] T-008 — Integrate shells, semantic UI primitives, localization, and component hierarchy
 

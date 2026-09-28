@@ -12,7 +12,7 @@ import { LearningService } from "@/server/learning/service";
 
 import { QuizRepository } from "./repository";
 import type { QuizAttempt, QuizQuestionType, QuizSubmission } from "./types";
-import { quizSubmissionSchema, resetCycleSchema } from "./validation";
+import { quizSubmissionSchema } from "./validation";
 
 type QuizDefinition = {
   pass_percentage: number;
@@ -240,56 +240,14 @@ export class QuizService {
     return withTransaction(this.pool, async (client) => {
       const actor = await loadAuthenticated(client, sessionToken, true);
       if (!actor || !canAccessAdministration(actor)) return failure("denied", "Operation is not permitted.");
-      return { ok: true, value: await this.repository.listAttempts(client, learnerAccountId, courseId, quizItemId, true) };
-    });
-  }
-
-  async resetCycle(sessionToken: string, input: unknown): Promise<ServiceResult<{ cycleId: string; cycleNumber: number }>> {
-    const parsed = resetCycleSchema.safeParse(input);
-    if (!parsed.success) return failure("validation", "Quiz reset details are invalid.");
-    return withTransaction(this.pool, async (client) => {
-      const actor = await loadAuthenticated(client, sessionToken, true);
-      if (!actor || !canAccessAdministration(actor)) return failure("denied", "Operation is not permitted.");
-      const generation = await client.query<{ id: string; revision_id: string }>(
-        `SELECT id, revision_id FROM learner_course_generations
-         WHERE account_id = $1 AND course_id = $2 AND is_active
-         FOR UPDATE`,
-        [parsed.data.learnerAccountId, parsed.data.courseId],
-      );
-      if (!generation.rows[0]) return failure("conflict", "Learner course progress is unavailable.");
-      const definition = await this.loadDefinition(client, generation.rows[0].revision_id, parsed.data.quizItemId);
-      if (!definition) return failure("denied", "Quiz is unavailable.");
-      const active = await this.loadOrCreateCycle(
-        client,
-        generation.rows[0].id,
-        generation.rows[0].revision_id,
-        parsed.data.quizItemId,
-      );
+      const attempts = await this.repository.listAttempts(client, learnerAccountId, courseId, quizItemId, true);
       await client.query(
-        `UPDATE quiz_cycles
-         SET is_active = false, closed_at = transaction_timestamp()
-         WHERE id = $1`,
-        [active.id],
+        `INSERT INTO administrator_access_audit
+           (id, actor_account_id, subject_account_id, access_type, detail)
+         VALUES ($1, $2, $3, 'quiz_answers', $4::jsonb)`,
+        [randomUUID(), actor.accountId, learnerAccountId, JSON.stringify({ courseId, quizItemId, attemptCount: attempts.length })],
       );
-      const cycleId = randomUUID();
-      await client.query(
-        `INSERT INTO quiz_cycles
-           (id, generation_id, revision_id, quiz_item_id, cycle_number, next_eligible_at,
-            reset_by_account_id, reset_reason)
-         VALUES ($1, $2, $3, $4, $5,
-                 transaction_timestamp() + make_interval(secs => $6), $7, $8)`,
-        [
-          cycleId,
-          generation.rows[0].id,
-          generation.rows[0].revision_id,
-          parsed.data.quizItemId,
-          active.cycle_number + 1,
-          parsed.data.waitSeconds,
-          actor.accountId,
-          parsed.data.reason,
-        ],
-      );
-      return { ok: true, value: { cycleId, cycleNumber: active.cycle_number + 1 } };
+      return { ok: true, value: attempts };
     });
   }
 
