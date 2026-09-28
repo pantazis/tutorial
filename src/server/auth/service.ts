@@ -44,7 +44,7 @@ async function audit(
   );
 }
 
-async function loadAuthenticated(
+export async function loadAuthenticated(
   client: PoolClient,
   sessionToken: string,
   lockAccount = false,
