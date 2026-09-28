@@ -79,7 +79,7 @@ Complete one task at a time. A task is complete only after all `VERIFY` evidence
 
 **Verification evidence — September 28, 2026:** Ordered migration `0004_learner_progress.sql` and its post-check passed through Docker Compose (`migrate`: 4 migrations verified; `migration-smoke`: passed). Direct PostgreSQL integration tests passed all 4 learner-progress cases covering published language/draft denial, administrator progress isolation, multiple active courses and catalog ordering, mixed outline traversal, opening without starts, idempotent course/lesson starts, locked and unstarted direct-call denial, Required/Optional percentages, tutorial explicit-end and text/media meditation signals, revisit durability, sequential/custom prerequisite unlocks, exact lesson/course completion timestamps, deterministic resume including unstarted Lesson Overview, and completed review access. The complete Vitest result was 5 files/40 tests passed. ESLint passed with zero warnings, TypeScript passed, and the multi-stage production image built successfully as non-root image `sha256:ebf735d963243c52ea6226f6b46621c3adafeafeef1683047ebf914f112f60e4` with `PRODUCTION_BUILD_EXIT_CODE=0`.
 
-### [ ] T-006 — Implement immutable quiz attempts, grading, exhaustion, and cycles
+### [x] T-006 — Implement immutable quiz attempts, grading, exhaustion, and cycles
 
 - **GOAL:** Provide reproducible randomized quizzes with server grading and immutable attempt history.
 - **DEPENDENCIES:** `T-005`.
@@ -91,6 +91,8 @@ Complete one task at a time. A task is complete only after all `VERIFY` evidence
 - **VERIFY:** Deterministic tests prove all questions appear, question/option orders vary and remain stable per attempt, each question type grades correctly, pass thresholds and Required integration work, stale/duplicate/unknown answers fail safely, limits/exhaustion/waits/reveal behave, Pass locks retake, and new reset cycles preserve prior history.
 - **DONE_WHEN:** Every displayed attempt is reproducible from its immutable snapshot and only a valid Pass completes the quiz item.
 - **NEXT:** `T-007`.
+
+**Verification evidence — September 28, 2026:** Ordered migration `0005_quiz_attempts.sql` and its post-check passed through Docker Compose (`migrate`: 5 migrations verified; `migration-smoke`: passed). The focused deterministic quiz integration suite passed all 4 cases, covering persisted randomized question/option snapshots and stable open-attempt replay, all supported question types, pass thresholds and Required-item completion, invalid/stale/duplicate/cross-attempt answer rejection, finite exhaustion, reveal policies, server-time waits, post-Pass lockout, immutable reset-cycle history, Unlimited attempts, learner isolation, and authorized administrator answer history. The complete Vitest result was 6 files/44 tests passed. ESLint passed with zero warnings, TypeScript passed, Compose configuration and `git diff --check` passed, and the multi-stage production image built and ran successfully as non-root user `nextjs`, image `sha256:edf1cec3c31e981aede3f8b1156abba9988be8b65a83f5d09a67687d2a599ec4`.
 
 ### [ ] T-007 — Implement notifications, reset transactions, learner oversight, and factual reporting services
 

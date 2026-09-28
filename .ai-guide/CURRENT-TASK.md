@@ -2,15 +2,15 @@
 
 STATUS: READY
 
-### [ ] T-006 — Implement immutable quiz attempts, grading, exhaustion, and cycles
+### [ ] T-007 — Implement notifications, reset transactions, learner oversight, and factual reporting services
 
-- **GOAL:** Provide reproducible randomized quizzes with server grading and immutable attempt history.
-- **DEPENDENCIES:** `T-005` complete on September 28, 2026.
-- **READ:** `REQUIREMENTS.md` — `FR-010`; `ARCHITECTURE.md` — Quiz/reset transactions and Learning/progress; `DECISIONS.md` — `AD-007`.
-- **REUSE:** Governed quiz revisions, learner access/start policy, progress completion command, transaction/audit primitives.
-- **TOUCH:** Quiz cycle/attempt/snapshot/order/submitted-answer migrations, repositories, attempt-start/submission/history/reset-cycle services.
-- **DO_NOT:** Do not support free text, randomize only in browser, recompute order after display, erase attempts, reveal answers contrary to policy, or allow post-pass retake without reset.
-- **STEPS:** Snapshot all governed questions/options in randomized persisted order; enforce eligibility, finite/unlimited limits and server-time waits; validate and grade allowed answers; persist score/pass/fail/answers/attempt number/cycle; apply reveal policy; complete item only on Pass; expose learner and authorized admin histories.
-- **VERIFY:** Deterministic tests prove all questions appear, question/option orders vary and remain stable per attempt, each question type grades correctly, pass thresholds and Required integration work, stale/duplicate/unknown answers fail safely, limits/exhaustion/waits/reveal behave, Pass locks retake, and new reset cycles preserve prior history.
-- **DONE_WHEN:** Every displayed attempt is reproducible from its immutable snapshot and only a valid Pass completes the quiz item.
-- **NEXT:** `T-007`.
+- **GOAL:** Provide audited non-destructive resets, immutable notifications, privacy-safe learner lookup, and factual reporting.
+- **DEPENDENCIES:** `T-006` complete on September 28, 2026.
+- **READ:** `REQUIREMENTS.md` — `FR-013..016`, `NFR-002..003`; `ARCHITECTURE.md` — Quiz/reset transactions, Notifications/reporting/preview/data rights; `DECISIONS.md` — `AD-005`, `AD-008..009`, GATE-PRIVACY-001.
+- **REUSE:** Progress dependency graph, quiz cycles, authorization/audit services, published course language, server timestamps, typed read models.
+- **TOUCH:** Notification/reset/audited-access migrations and repositories; reset preview/confirm, publication notification, learner search/detail, report, export, and policy-isolated deletion orchestration services.
+- **DO_NOT:** Do not trust preview as mutation authority, delete history, reset unrelated progress, add unread state/rankings/sensitive filters, or enable destructive deletion/retention jobs before `GATE-PRIVACY-001` is resolved.
+- **STEPS:** Materialize language-targeted publication/update notifications; compute expiring reset impact fingerprints; revalidate under locks and create generations/cycles, before/after references, audit, recalculation, and learner notification atomically; add permitted learner/report filters and access audits; implement own-data export and a blocked/policy boundary for deletion.
+- **VERIFY:** Tests cover preference-at-event notification targeting/history, chronological empty-state data, quiz/lesson/course impact preview, stale conflict, dependent-only recalculation, unrelated-course preservation, immutable history, reason/audit fields, atomic notification, authorized answer access, allowed/forbidden filters, noncompetitive aggregates, export scope, and deletion fail-closed behavior.
+- **DONE_WHEN:** Resets and administrative reads are transactional, auditable, privacy-bounded, and cannot rewrite unrelated or historical facts.
+- **NEXT:** `T-008`.

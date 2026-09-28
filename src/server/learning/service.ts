@@ -11,9 +11,11 @@ import { withTransaction } from "@/server/db/transaction";
 import { LearningRepository } from "./repository";
 import type { LearnerCatalogEntry, LearnerCourse, LearnerItem, ResumeTarget } from "./types";
 
-type Generation = { id: string; revision_id: string };
+export type LearningGeneration = { id: string; revision_id: string };
 type StartedCourseAccess = { context: AuthenticatedContext; generation: Generation };
-type ItemAccess = StartedCourseAccess & { lessonId: string; item: LearnerItem };
+export type LearningItemAccess = StartedCourseAccess & { lessonId: string; item: LearnerItem };
+type Generation = LearningGeneration;
+type ItemAccess = LearningItemAccess;
 
 function failure<T>(code: "validation" | "unauthenticated" | "denied" | "conflict" | "transient", message: string): ServiceResult<T> {
   return { ok: false, code, message };
@@ -106,7 +108,7 @@ export class LearningService {
 
   async recordTutorialEnd(sessionToken: string, courseId: string, itemId: string): Promise<ServiceResult<null>> {
     return withTransaction(this.pool, async (client) => {
-      const access = await this.lockItem(client, sessionToken, courseId, itemId);
+      const access = await this.lockItemForCommand(client, sessionToken, courseId, itemId);
       if (!access.ok) return access;
       if (access.value.item.type !== "tutorial" && access.value.item.type !== "topic") {
         return failure("validation", "Only tutorial content accepts an explicit end marker.");
@@ -129,7 +131,7 @@ export class LearningService {
 
   async completeTutorial(sessionToken: string, courseId: string, itemId: string): Promise<ServiceResult<null>> {
     return withTransaction(this.pool, async (client) => {
-      const access = await this.lockItem(client, sessionToken, courseId, itemId);
+      const access = await this.lockItemForCommand(client, sessionToken, courseId, itemId);
       if (!access.ok) return access;
       if (access.value.item.type !== "tutorial" && access.value.item.type !== "topic") {
         return failure("validation", "Only tutorial content accepts this completion command.");
@@ -139,7 +141,7 @@ export class LearningService {
         [access.value.generation.id, itemId],
       );
       if (!eligibility.rows[0]?.end_eligible_at) return failure("conflict", "Reach the end before completing this tutorial.");
-      await this.completeItem(client, access.value.context, courseId, access.value.generation, access.value.lessonId, itemId, "tutorial_explicit");
+      await this.completeItemForCommand(client, access.value.context, courseId, access.value.generation, access.value.lessonId, itemId, "tutorial_explicit");
       return { ok: true, value: null };
     });
   }
@@ -151,13 +153,13 @@ export class LearningService {
     signal: "text_end" | "media_end",
   ): Promise<ServiceResult<null>> {
     return withTransaction(this.pool, async (client) => {
-      const access = await this.lockItem(client, sessionToken, courseId, itemId);
+      const access = await this.lockItemForCommand(client, sessionToken, courseId, itemId);
       if (!access.ok) return access;
       const item = access.value.item;
       if (item.type !== "guided_meditation") return failure("validation", "This item is not a meditation.");
       const expected = item.meditationFormat === "text" ? "text_end" : "media_end";
       if (signal !== expected) return failure("validation", "The completion signal does not match this meditation format.");
-      await this.completeItem(client, access.value.context, courseId, access.value.generation, access.value.lessonId, itemId, signal);
+      await this.completeItemForCommand(client, access.value.context, courseId, access.value.generation, access.value.lessonId, itemId, signal);
       return { ok: true, value: null };
     });
   }
@@ -199,7 +201,7 @@ export class LearningService {
     return { ok: true as const, value: { context, generation } };
   }
 
-  private async lockItem(
+  async lockItemForCommand(
     client: PoolClient,
     sessionToken: string,
     courseId: string,
@@ -226,7 +228,7 @@ export class LearningService {
     return result.rows[0] ?? null;
   }
 
-  private async completeItem(
+  async completeItemForCommand(
     client: PoolClient,
     context: AuthenticatedContext,
     courseId: string,
