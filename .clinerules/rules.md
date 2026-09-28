@@ -153,6 +153,7 @@ When all verification succeeds:
 3. Project only the dependency-ready `NEXT` task into `.ai-guide\CURRENT-TASK.md`.
 4. Keep all canonical guide documents synchronized with verified repository evidence.
 5. If workflow state storage such as `.ai-guide\state.json` exists, update it last.
+6. Create a Git commit containing only the completed task's verified changes. Do not commit blocked, failed, unverified, secret-bearing, or unrelated user work.
 
 When authority is missing or verification fails:
 
