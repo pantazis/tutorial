@@ -2,15 +2,15 @@
 
 STATUS: READY
 
-### [ ] T-005 — Implement learner catalog, starts, progress, completion, prerequisites, and resume
+### [ ] T-006 — Implement immutable quiz attempts, grading, exhaustion, and cycles
 
-- **GOAL:** Make learner access and progress fully server-authoritative, factual, and durable.
-- **DEPENDENCIES:** `T-004` complete on September 28, 2026.
-- **READ:** `REQUIREMENTS.md` — `FR-005..009`, `NFR-002`, `NFR-006`; `ARCHITECTURE.md` — Learning/progress; `DECISIONS.md` — `AD-004..006`.
-- **REUSE:** Published revision traversal/order, authorization/language policy, transaction helpers, and typed read models.
-- **TOUCH:** Course/lesson/item progress-generation migrations and repositories; catalog/access/start/completion/recalculation/resume services.
-- **DO_NOT:** Do not create manual enrollment, persist scroll/media position, allow browser-calculated status, let Optional items gate progress, or let Resume bypass Start Lesson.
-- **STEPS:** Derive matching published catalog and status ordering; implement idempotent Start Course/Start Lesson timestamps; enforce locks for direct calls; validate tutorial explicit-end command and meditation end signals; recalculate Required-only lesson percentage/completion, lesson prerequisites, course percentage/completion, durable timestamps, and deterministic resume in one transaction.
-- **VERIFY:** Direct-service and integration tests cover cross-language/draft denial, admin-as-learner isolation, multiple active courses, mixed outline order, locked non-bypass, opening-without-start, start idempotency, Required/Optional calculations, tutorial/media/text rules, revisit, sequential/custom unlock, completion timestamps, exact resume target including unstarted lesson, and completed review access.
-- **DONE_WHEN:** PostgreSQL projections and history produce every accepted learner status/unlock/resume result without browser authority.
-- **NEXT:** `T-006`.
+- **GOAL:** Provide reproducible randomized quizzes with server grading and immutable attempt history.
+- **DEPENDENCIES:** `T-005` complete on September 28, 2026.
+- **READ:** `REQUIREMENTS.md` — `FR-010`; `ARCHITECTURE.md` — Quiz/reset transactions and Learning/progress; `DECISIONS.md` — `AD-007`.
+- **REUSE:** Governed quiz revisions, learner access/start policy, progress completion command, transaction/audit primitives.
+- **TOUCH:** Quiz cycle/attempt/snapshot/order/submitted-answer migrations, repositories, attempt-start/submission/history/reset-cycle services.
+- **DO_NOT:** Do not support free text, randomize only in browser, recompute order after display, erase attempts, reveal answers contrary to policy, or allow post-pass retake without reset.
+- **STEPS:** Snapshot all governed questions/options in randomized persisted order; enforce eligibility, finite/unlimited limits and server-time waits; validate and grade allowed answers; persist score/pass/fail/answers/attempt number/cycle; apply reveal policy; complete item only on Pass; expose learner and authorized admin histories.
+- **VERIFY:** Deterministic tests prove all questions appear, question/option orders vary and remain stable per attempt, each question type grades correctly, pass thresholds and Required integration work, stale/duplicate/unknown answers fail safely, limits/exhaustion/waits/reveal behave, Pass locks retake, and new reset cycles preserve prior history.
+- **DONE_WHEN:** Every displayed attempt is reproducible from its immutable snapshot and only a valid Pass completes the quiz item.
+- **NEXT:** `T-007`.

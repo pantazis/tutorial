@@ -64,7 +64,7 @@ Complete one task at a time. A task is complete only after all `VERIFY` evidence
 
 **Verification evidence — September 28, 2026:** Ordered migration `0003_course_governance.sql` and its post-check passed through the Docker Compose `migration-smoke` service. Direct PostgreSQL integration tests passed 10 course/governance cases covering independent EL/EN records, deterministic mixed grouped/ungrouped ordering, Required-default items, sequential/custom same-revision prerequisites, cycle/orphan/zero-required rejection, purpose-built meditation and quiz constraints, stale draft conflicts, revision-bound review invalidation, Save/Publish separation, dual governance approvals, immutable published meaning, unpublish/archive history, trusted cover/source metadata, language immutability after learner history, language-gated publication reads, and preview with no learner writes. The complete Vitest result was 4 files/36 tests passed. ESLint passed with zero warnings, TypeScript passed, Compose configuration validation passed, `git diff --check` passed, and the multi-stage production image built successfully. PostgreSQL remained internal with no published host port.
 
-### [ ] T-005 — Implement learner catalog, starts, progress, completion, prerequisites, and resume
+### [x] T-005 — Implement learner catalog, starts, progress, completion, prerequisites, and resume
 
 - **GOAL:** Make learner access and progress fully server-authoritative, factual, and durable.
 - **DEPENDENCIES:** `T-004`.
@@ -76,6 +76,8 @@ Complete one task at a time. A task is complete only after all `VERIFY` evidence
 - **VERIFY:** Direct-service and integration tests cover cross-language/draft denial, admin-as-learner isolation, multiple active courses, mixed outline order, locked non-bypass, opening-without-start, start idempotency, Required/Optional calculations, tutorial/media/text rules, revisit, sequential/custom unlock, completion timestamps, exact resume target including unstarted lesson, and completed review access.
 - **DONE_WHEN:** PostgreSQL projections and history produce every accepted learner status/unlock/resume result without browser authority.
 - **NEXT:** `T-006`.
+
+**Verification evidence — September 28, 2026:** Ordered migration `0004_learner_progress.sql` and its post-check passed through Docker Compose (`migrate`: 4 migrations verified; `migration-smoke`: passed). Direct PostgreSQL integration tests passed all 4 learner-progress cases covering published language/draft denial, administrator progress isolation, multiple active courses and catalog ordering, mixed outline traversal, opening without starts, idempotent course/lesson starts, locked and unstarted direct-call denial, Required/Optional percentages, tutorial explicit-end and text/media meditation signals, revisit durability, sequential/custom prerequisite unlocks, exact lesson/course completion timestamps, deterministic resume including unstarted Lesson Overview, and completed review access. The complete Vitest result was 5 files/40 tests passed. ESLint passed with zero warnings, TypeScript passed, and the multi-stage production image built successfully as non-root image `sha256:ebf735d963243c52ea6226f6b46621c3adafeafeef1683047ebf914f112f60e4` with `PRODUCTION_BUILD_EXIT_CODE=0`.
 
 ### [ ] T-006 — Implement immutable quiz attempts, grading, exhaustion, and cycles
 
