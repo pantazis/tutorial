@@ -19,7 +19,7 @@ Complete one task at a time. A task is complete only after all `VERIFY` evidence
 
 **Verification evidence — September 28, 2026:** Owner explicitly authorized a new baseline and compatible stack selection. Git inspection found only `main`, no tags or alternate production refs/repositories, and no application/config baseline. `ARCHITECTURE.md` now maps runtime, routes, modules, PostgreSQL, ordered SQL migrations, auth/cookies, localization, styles, validation, tests, Docker, mail/media, deployment, and privacy gates; `FRONTEND.md` maps route families and styling. The pre-existing `.clinerules/rules.md` modification was hash/diff checked and not edited. Documentation checks and scoped Git diff passed; commit evidence is recorded in repository history.
 
-### [ ] T-002 — Establish Docker-only application, database, migration, and check baseline
+### [x] T-002 — Establish Docker-only application, database, migration, and check baseline
 
 - **GOAL:** Make the confirmed host reproducibly runnable and verifiable through Docker Compose without exposing PostgreSQL.
 - **DEPENDENCIES:** `T-001`.
@@ -31,6 +31,8 @@ Complete one task at a time. A task is complete only after all `VERIFY` evidence
 - **VERIFY:** From documented Compose commands, build images, start healthy services, run migration smoke test, lint, typecheck, baseline tests, production build, backup/restore validation, and teardown; inspect that PostgreSQL has no public host port and production runs non-root.
 - **DONE_WHEN:** A fresh checkout can execute the complete baseline lifecycle only through Docker Compose with recorded evidence.
 - **NEXT:** `T-003`.
+
+**Verification evidence — September 28, 2026:** Docker Compose built the pinned development, check, and multi-stage production images; a fresh `postgres-data` volume reached healthy `db`, successful `migrate`, and healthy host-accessible `app` services. `migration-smoke` passed; ESLint passed with zero warnings; TypeScript passed; Vitest passed 2 files/5 tests; the standalone production image built, reached healthy status, and ran as `nextjs` UID/GID 1001. PostgreSQL exposed no host port and remained only on `app-internal`; the development app used a separate bridge only for its explicit HTTP port. Backup archive creation/list validation and disposable restore validation passed with one migration record. Full-profile teardown removed current project containers, networks, and the declared `postgres-data` volume. `docker compose ... config --quiet` and scoped `git diff --check` passed. Windows execution defects found during verification were corrected with repository-enforced LF shell scripts, the `.mjs` declaration was renamed to `.d.mts`, and Vitest now resolves the approved `@/*` source alias. The unrelated user change to `.clinerules/hooks/TaskComplete.ps1` and an obsolete pre-existing September 17 Docker volume were preserved.
 
 ### [ ] T-003 — Implement identity, session, authorization, and administrator-membership core
 

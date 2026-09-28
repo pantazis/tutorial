@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Fail closed unless every operation targets an approved local Compose database.
 case "${APP_ENV:-}" in
   development|test) ;;
   *) echo "Unsafe APP_ENV '${APP_ENV:-}'." >&2; exit 1 ;;

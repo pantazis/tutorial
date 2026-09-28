@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# The shared guard rejects nonlocal and non-development targets before pg_dump runs.
 source /workspace/scripts/db/assert-safe-target.sh
 mkdir -p /workspace/backups
 pg_dump --format=custom --no-owner --no-privileges --file=/workspace/backups/local-latest.dump

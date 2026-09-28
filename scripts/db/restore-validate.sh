@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Restore only into the disposable Compose validation database.
 source /workspace/scripts/db/assert-safe-target.sh
 
 backup_file=/workspace/backups/local-latest.dump
