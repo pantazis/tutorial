@@ -2,15 +2,15 @@
 
 STATUS: READY
 
-### [ ] T-003 — Implement identity, session, authorization, and administrator-membership core
+### [ ] T-004 — Implement revisioned course, content, ordering, prerequisite, and governance core
 
-- **GOAL:** Provide first-party account lifecycle and server-only authorization for the exact three roles.
-- **DEPENDENCIES:** `T-002` complete on September 28, 2026.
-- **READ:** `REQUIREMENTS.md` — `FR-001..004`, `FR-017`, `NFR-001..003`, `NFR-006`; `ARCHITECTURE.md` — Identity, session, and administrator membership, Security and failure behavior; `DECISIONS.md` — `GATE-MAIL-001`; `TESTING.md` — Security and identity.
-- **REUSE:** Confirmed password/crypto, validation, request adapter, database transaction, cookie, audit, localization, and mail abstractions; the verified Docker-only baseline from `T-002`.
-- **TOUCH:** Identity/session/token/invitation/audit SQL migrations and repositories; auth/authorization services; safe-`returnTo`; container-only master command; local mail adapter; protected route adapters.
-- **DO_NOT:** Do not trust submitted identity/role, store raw tokens, permit public admin assignment, expose master membership in web commands, select a production mail provider without authority, or begin course/content features.
-- **STEPS:** Add constrained account/preference/role/session/token/invitation/audit storage; implement registration, verification, login/logout, password reset, session revocation, role landing, protected-context loading, safe return parsing, invitation acceptance, admin grant/revoke, and last-active-master locking; expose typed results and a narrow mail interface/local sink.
-- **VERIFY:** Service/integration tests cover registration role injection including nested input, verification gate, token hashing/expiry/single use, cookie attributes, logout revocation, current-role recheck, safe-return bypass corpus, self/admin/master scopes, concurrent invitation acceptance and role changes, zero-master rejection, and audited container recovery.
-- **DONE_WHEN:** Protected requests derive identity from a revocable PostgreSQL session and all role invariants pass direct-service tests.
-- **NEXT:** `T-004`.
+- **GOAL:** Persist and govern independent EL/EN course revisions and publish only structurally valid reviewed content.
+- **DEPENDENCIES:** `T-003` complete on September 28, 2026.
+- **READ:** `REQUIREMENTS.md` — `FR-004..006`, `FR-011..012`, `NFR-002`, `NFR-006`, `NFR-010`; `ARCHITECTURE.md` — Course/governance, Data ownership; `DECISIONS.md` — `AD-003..004`.
+- **REUSE:** Confirmed SQL/transaction/validation/media patterns and authorization services from `T-003`.
+- **TOUCH:** Course/revision/group/lesson/item/quiz-definition/prerequisite/governance/source/cover migrations, repositories, policies, admin commands, publication read models, preview context.
+- **DO_NOT:** Do not create paired translation records, generic CMS/page-builder schemas, mutate published revisions in place, invent content/media, or let Save publish.
+- **STEPS:** Model deterministic mixed grouped/ungrouped ordering, Required-default items, same-course acyclic lesson prerequisites with sequential defaults, purpose-built content blocks and quiz definitions, immutable language after progress, revision-bound reviews, publication blockers, archive/unpublish, accessible cover/fallback and attribution, and no-write preview read models.
+- **VERIFY:** Migration constraints and service tests cover EL/EN independence, ordering, mixed outlines, required defaults, cycle/orphan/zero-denominator rejection, language immutability trigger point, stale revision conflicts, review invalidation after edits, Save/Publish separation, governance requirements, source/cover rules, archive history, and preview producing no learner writes.
+- **DONE_WHEN:** Only an authorized, valid, reviewed revision can become learner-visible and its published historical meaning remains stable.
+- **NEXT:** `T-005`.

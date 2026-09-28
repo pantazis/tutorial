@@ -1,3 +1,6 @@
+import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
+
 import pg from "pg";
 
 import { readMigrationFiles } from "./migration-files.mjs";
@@ -33,8 +36,13 @@ try {
     }
   });
 
-  for (const check of ["db/checks/0001_migration_history.sql"]) {
-    const result = await client.query(await (await import("node:fs/promises")).readFile(check, "utf8"));
+  const checkDirectory = path.join(process.cwd(), "db", "checks");
+  const checks = (await readdir(checkDirectory))
+    .filter((name) => /^\d{4}_[a-z0-9_]+\.sql$/u.test(name))
+    .sort((left, right) => left.localeCompare(right));
+
+  for (const check of checks) {
+    const result = await client.query(await readFile(path.join(checkDirectory, check), "utf8"));
     if (result.rows[0]?.ok !== true) {
       throw new Error(`Database check '${check}' failed.`);
     }

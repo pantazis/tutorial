@@ -73,6 +73,15 @@ services:
     command: npm run db:verify
     profiles: [checks]
 
+  master-recovery:
+    <<: *check-service
+    environment:
+      <<: *app-environment
+      MASTER_RECOVERY_ACTION: ${MASTER_RECOVERY_ACTION:-}
+      MASTER_RECOVERY_EMAIL: ${MASTER_RECOVERY_EMAIL:-}
+    command: npm run auth:master-recovery
+    profiles: [operations]
+
   lint:
     <<: *check-service
     command: npm run lint

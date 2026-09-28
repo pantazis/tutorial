@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "auth:master-recovery": "node scripts/auth/master-recovery.mjs",
     "db:migrate": "node scripts/db/migrate.mjs",
     "db:verify": "node scripts/db/verify.mjs"
   },
