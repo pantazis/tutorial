@@ -1,0 +1,189 @@
+name: freemeditation-advanced-learning
+
+x-app-environment: &app-environment
+  APP_ENV: ${APP_ENV:-development}
+  DATABASE_URL: ${DATABASE_URL:-postgresql://freemeditation:local_only_change_me@db:5432/freemeditation_dev}
+  MAIL_HOST: ${MAIL_HOST:-mailpit}
+  MAIL_PORT: ${MAIL_PORT:-1025}
+
+x-check-service: &check-service
+  build:
+    context: .
+    target: checks
+  environment: *app-environment
+  depends_on:
+    db:
+      condition: service_healthy
+  networks:
+    - app-internal
+
+services:
+  lock:
+    image: node:24.18.0-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
+    working_dir: /app
+    command: npm install --package-lock-only --ignore-scripts
+    volumes:
+      - .:/app
+    profiles: [tools]
+
+  db:
+    image: postgres:18.0-bookworm@sha256:3f55f8895c4ed50603e2fbdfc72fffeeaba3173321fee5cb825bbbeb30d9d854
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-freemeditation_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-freemeditation}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_only_change_me}
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    networks:
+      - app-internal
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      target: development
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, "node", "scripts/healthcheck.mjs"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    networks:
+      - app-internal
+
+  migrate:
+    <<: *check-service
+    command: npm run db:migrate
+
+  migration-smoke:
+    <<: *check-service
+    command: npm run db:verify
+    profiles: [checks]
+
+  lint:
+    <<: *check-service
+    command: npm run lint
+    profiles: [checks]
+
+  typecheck:
+    <<: *check-service
+    command: npm run typecheck
+    profiles: [checks]
+
+  test:
+    <<: *check-service
+    environment:
+      <<: *app-environment
+      APP_ENV: test
+    command: npm test
+    profiles: [checks]
+
+  production-build:
+    build:
+      context: .
+      target: production
+    command: ["node", "--version"]
+    profiles: [checks]
+
+  production:
+    build:
+      context: .
+      target: production
+    environment:
+      <<: *app-environment
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, "node", "scripts/healthcheck.mjs"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks:
+      - app-internal
+    profiles: [production]
+
+  backup:
+    image: postgres:18.0-bookworm@sha256:3f55f8895c4ed50603e2fbdfc72fffeeaba3173321fee5cb825bbbeb30d9d854
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-freemeditation_dev}
+      PGUSER: ${POSTGRES_USER:-freemeditation}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-local_only_change_me}
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "/workspace/scripts/db/backup.sh"]
+    volumes:
+      - .:/workspace
+    networks:
+      - app-internal
+    profiles: [operations]
+
+  restore-db:
+    image: postgres:18.0-bookworm@sha256:3f55f8895c4ed50603e2fbdfc72fffeeaba3173321fee5cb825bbbeb30d9d854
+    environment:
+      POSTGRES_DB: freemeditation_restore_test
+      POSTGRES_USER: restore_validator
+      POSTGRES_PASSWORD: restore_only_change_me
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U restore_validator -d freemeditation_restore_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    tmpfs:
+      - /var/lib/postgresql
+    networks:
+      - app-internal
+    profiles: [operations]
+
+  restore-validate:
+    image: postgres:18.0-bookworm@sha256:3f55f8895c4ed50603e2fbdfc72fffeeaba3173321fee5cb825bbbeb30d9d854
+    environment:
+      APP_ENV: test
+      PGHOST: restore-db
+      PGPORT: 5432
+      PGDATABASE: freemeditation_restore_test
+      PGUSER: restore_validator
+      PGPASSWORD: restore_only_change_me
+    depends_on:
+      restore-db:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "/workspace/scripts/db/restore-validate.sh"]
+    volumes:
+      - .:/workspace
+    networks:
+      - app-internal
+    profiles: [operations]
+
+  mailpit:
+    image: axllent/mailpit:v1.27.8@sha256:6abc8e633df15eaf785cfcf38bae48e66f64beecdc03121e249d0f9ec15f0707
+    ports:
+      - "127.0.0.1:8025:8025"
+    networks:
+      - app-internal
+    profiles: [mail]
+
+volumes:
+  postgres-data:
+
+networks:
+  app-internal:
+    internal: true

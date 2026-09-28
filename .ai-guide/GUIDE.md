@@ -6,7 +6,7 @@ Deliver the FreeMeditation.gr advanced-course module as a merge-ready feature of
 
 ## Precedence and authority
 
-1. `.clinerules/update.md` controls project-wide execution quality.
+1. `.clinerules/rules.md` controls project-wide execution quality.
 2. This `.ai-guide` is the implementation authority compiled from cycle 1.
 3. `REQUIREMENTS.md` owns stable product requirements and acceptance criteria.
 4. `ARCHITECTURE.md` owns system boundaries, invariants, and gates.
@@ -20,7 +20,7 @@ If repository evidence found by `T-001` conflicts with a physical assumption, pr
 
 ## Execution rules
 
-- Implement one task per invocation. Read `.clinerules/update.md`, `CURRENT-TASK.md`, and only its listed headings/files.
+- Implement one task per invocation. Read `.clinerules/rules.md`, `CURRENT-TASK.md`, and only its listed headings/files.
 - Preserve uncommitted work. Reuse confirmed host code and conventions before creating anything.
 - Run all project runtime, migration, lint, typecheck, test, build, backup, restore, and teardown operations through Docker Compose. Do not use native host project tooling.
 - Mark a task complete only after every `VERIFY` step succeeds and evidence is recorded. Then check it in `IMPLEMENTATION.md` and project one dependency-ready next task.

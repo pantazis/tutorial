@@ -132,7 +132,7 @@ function Get-ImplementationDecision {
     $prompt = @"
 Continue application implementation in a fresh Cline task.
 
-Treat .clinerules\update.md as the first policy layer. Read .ai-guide\CURRENT-TASK.md first, then only the guide headings and source files listed by that task. Implement exactly task $taskId, run every VERIFY step, and preserve uncommitted work. On success, mark the canonical task [x] with evidence, project exactly one next dependency-ready task into CURRENT-TASK.md, and update workflow state last only if such storage exists. On failure or missing authority, keep this task unchecked, record STATUS: BLOCKED with evidence and a recovery condition, and do not promote another task.
+Treat .clinerules\rules.md as the first policy layer. Read .ai-guide\CURRENT-TASK.md first, then only the guide headings and source files listed by that task. Implement exactly task $taskId, run every VERIFY step, and preserve uncommitted work. On success, mark the canonical task [x] with evidence, project exactly one next dependency-ready task into CURRENT-TASK.md, and update workflow state last only if such storage exists. On failure or missing authority, keep this task unchecked, record STATUS: BLOCKED with evidence and a recovery condition, and do not promote another task.
 "@
 
     return New-Decision `
@@ -225,7 +225,7 @@ Handle at most this one assigned role contribution:
 - agent: $agentId
 - personality: $relativePersonality
 
-Treat .clinerules\update.md as the first policy layer. Follow .clinerules\00-shared-protocol.md and .clinerules\research-lifecycle.mmd exactly. Read the complete .clinerules\subject.md, state.json, research_output.md, and the assigned personality before acting. Reconcile any already-complete contribution, otherwise perform only this role's contribution. Append and validate the contribution before updating state.json last. Do not run the next role in this task.
+Treat .clinerules\rules.md as the first policy layer. Follow .clinerules\00-shared-protocol.md and .clinerules\research-lifecycle.mmd exactly. Read the complete .clinerules\subject.md, state.json, research_output.md, and the assigned personality before acting. Reconcile any already-complete contribution, otherwise perform only this role's contribution. Append and validate the contribution before updating state.json last. Do not run the next role in this task.
 "@
 
             return New-Decision `
