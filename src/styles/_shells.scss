@@ -1,0 +1,20 @@
+.skip-link {
+  position: fixed;
+  inset-block-start: var(--space-3);
+  inset-inline-start: var(--space-3);
+  z-index: 20;
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-action-contrast);
+  background: var(--color-focus);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skip-link {
+    transition: transform 120ms ease-out;
+  }
+}

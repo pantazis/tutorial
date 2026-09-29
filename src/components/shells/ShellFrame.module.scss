@@ -1,0 +1,111 @@
+.shell {
+  min-block-size: 100vh;
+}
+
+.header,
+.context,
+.feedback,
+.main,
+.footer {
+  inline-size: min(100% - 2rem, var(--container-page));
+  margin-inline: auto;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-8);
+  align-items: center;
+  justify-content: space-between;
+  padding-block: var(--space-4);
+  border-block-end: 1px solid var(--color-border);
+}
+
+.brand {
+  color: var(--color-text);
+  font-family: var(--font-interface);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.navList,
+.localeList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navLink,
+.localeLink {
+  display: inline-flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  font-family: var(--font-interface);
+}
+
+.navLink[aria-current="page"],
+.localeLink[aria-current="page"] {
+  color: var(--color-text);
+  font-weight: 700;
+  text-decoration-thickness: 0.18em;
+}
+
+.context {
+  padding-block: var(--space-4) 0;
+  font-family: var(--font-interface);
+}
+
+.feedback:not(:empty) {
+  padding-block: var(--space-4) 0;
+}
+
+.main {
+  min-block-size: 55vh;
+  padding-block: var(--space-8) var(--space-12);
+}
+
+.reading .main {
+  max-inline-size: var(--container-reading);
+}
+
+.title {
+  max-inline-size: 22ch;
+}
+
+.footer {
+  padding-block: var(--space-6);
+  border-block-start: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-family: var(--font-interface);
+}
+
+.previewBanner {
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-warning);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-interface);
+  font-weight: 700;
+}
+
+@media (min-width: 52rem) {
+  .header {
+    padding-block: var(--space-6);
+  }
+
+  .main {
+    padding-block-start: var(--space-12);
+  }
+}
+
+@media (forced-colors: active) {
+  .header,
+  .footer,
+  .previewBanner {
+    border-color: CanvasText;
+  }
+}

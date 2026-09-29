@@ -1,0 +1,21 @@
+[data-state-tone="success"] {
+  --state-color: var(--color-success);
+}
+
+[data-state-tone="warning"] {
+  --state-color: var(--color-warning);
+}
+
+[data-state-tone="danger"] {
+  --state-color: var(--color-danger);
+}
+
+[data-state-tone="information"] {
+  --state-color: var(--color-information);
+}
+
+@media (forced-colors: active) {
+  [data-state-tone] {
+    border-color: CanvasText;
+  }
+}

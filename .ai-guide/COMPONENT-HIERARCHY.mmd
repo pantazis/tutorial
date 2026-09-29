@@ -39,6 +39,10 @@ flowchart TD
     ADMIN --> PGAM[PG-ADMIN-MGMT]
     PREVIEW --> PGAP[PG-ADMIN-PREVIEW]
 
+    APP --> STATES[Shared page states]
+    STATES --> STD[ST-DENIED]
+    STATES --> STU[ST-UNAVAILABLE]
+
     SHARED[Major shared components]
     PH[PageHeader / context headers]
     RN[ResultNotice / EmptyState]
@@ -62,6 +66,9 @@ flowchart TD
 
     PGA --> FE
     PGA --> RN
+    PGC --> PH
+    PGC --> RN
+    PGR --> RN
     PGMC --> PH
     PGMC --> CV
     PGMC --> SB
@@ -73,6 +80,7 @@ flowchart TD
     PGN --> PH
     PGN --> RN
     PGH --> PH
+    PGH --> RN
     PGCO --> CV
     PGCO --> SB
     PGL --> CV
@@ -86,6 +94,7 @@ flowchart TD
     PGQR --> QV
     PGQH --> QV
     PGAH --> PH
+    PGAH --> RN
     PGACS --> AV
     PGACS --> RN
     PGAC --> AV
@@ -94,6 +103,7 @@ flowchart TD
     PGAL --> RN
     PGAG --> GV
     PGAP --> CV
+    PGAP --> GV
     PGALS --> AV
     PGALS --> RN
     PGALR --> AV
@@ -103,3 +113,5 @@ flowchart TD
     PGREP --> RN
     PGAM --> AV
     PGAM --> GV
+    STD --> RN
+    STU --> RN
