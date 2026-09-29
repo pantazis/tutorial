@@ -6,7 +6,7 @@ Set-StrictMode -Version Latest
 # Set to $true to pause automatic continuation.
 # Set to $false to dispatch the next state.json-assigned task.
 # ============================================================
-$stopExecution = $false
+$stopExecution = $true
 
 if ($stopExecution) {
     Write-Output '{"cancel":false}'
