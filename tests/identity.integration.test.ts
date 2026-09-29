@@ -12,7 +12,7 @@ import {
   canManageAdministrators,
 } from "@/server/auth/policy";
 import { parseSafeReturnTo } from "@/server/auth/safe-return";
-import { isSameOriginRequest } from "@/server/auth/request-security";
+import { applicationOriginFromRequest, isSameOriginRequest } from "@/server/auth/request-security";
 import { IdentityService } from "@/server/auth/service";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -164,6 +164,31 @@ describe("identity and authorization core", () => {
           headers: { origin: "https://evil.example.test" },
         }),
         "https://app.example.test",
+      ),
+    ).toBe(false);
+  });
+
+  it("uses the public host boundary when an internal container URL differs", () => {
+    const request = new Request("http://0.0.0.0:3000/en/auth/login", {
+      method: "POST",
+      headers: {
+        host: "application:3000",
+        origin: "http://application:3000",
+        "x-forwarded-host": "internal-proxy:3000",
+        "x-forwarded-proto": "http",
+      },
+    });
+
+    const applicationOrigin = applicationOriginFromRequest(request);
+    expect(applicationOrigin).toBe("http://application:3000");
+    expect(isSameOriginRequest(request, applicationOrigin)).toBe(true);
+    expect(
+      isSameOriginRequest(
+        new Request(request.url, {
+          method: "POST",
+          headers: { ...Object.fromEntries(request.headers), origin: "https://evil.example.test" },
+        }),
+        applicationOrigin,
       ),
     ).toBe(false);
   });

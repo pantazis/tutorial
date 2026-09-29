@@ -29,7 +29,7 @@ function requireAdministrativeContext(context: AuthenticatedContext): Administra
 
 function learnerNavigation(locale: Locale, messages: Messages, currentPath?: string) {
   const items: NavigationItem[] = [
-    { href: `/${locale}/courses`, label: messages.myCourse },
+    { href: `/${locale}/my-course`, label: messages.myCourse },
     { href: `/${locale}/progress`, label: messages.myProgress },
     { href: `/${locale}/notifications`, label: messages.notifications },
     { href: `/${locale}/profile`, label: messages.myProfile },
@@ -47,7 +47,8 @@ function adminNavigation(context: AuthenticatedContext, messages: Messages, curr
     ...(context.role === "master_admin"
       ? [{ href: "/admin/administrators", label: messages.administratorManagement }]
       : []),
-    { href: `/${languageToLocale(context.language)}/courses`, label: messages.myCourse },
+    { href: `/${languageToLocale(context.language)}/my-course`, label: messages.myCourse },
+    { href: `/${languageToLocale(context.language)}/logout`, label: messages.logout },
   ];
   return items.map((item) => ({ ...item, current: item.href === currentPath }));
 }

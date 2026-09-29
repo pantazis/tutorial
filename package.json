@@ -18,6 +18,7 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:browser": "playwright test",
     "test:watch": "vitest",
     "auth:master-recovery": "node scripts/auth/master-recovery.mjs",
     "db:migrate": "node scripts/db/migrate.mjs",

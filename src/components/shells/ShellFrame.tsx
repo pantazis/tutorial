@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import type { Locale, Messages } from "@/i18n";
 
+import { RouteFocus } from "./RouteFocus";
 import styles from "./ShellFrame.module.scss";
 
 export type NavigationItem = {
@@ -69,7 +70,10 @@ export function ShellFrame({
         {feedback}
       </div>
       <main className={styles.main} id="main-content" tabIndex={-1}>
-        <h1 className={styles.title}>{title}</h1>
+        <RouteFocus />
+        <h1 className={styles.title} id="page-title" tabIndex={-1}>
+          {title}
+        </h1>
         {children}
       </main>
       <footer className={styles.footer}>{footer ?? messages.siteName}</footer>

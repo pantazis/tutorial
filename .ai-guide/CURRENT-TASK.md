@@ -2,15 +2,15 @@
 
 STATUS: READY
 
-### [ ] T-009 — Deliver public-to-auth boundary and account lifecycle UI
+### [ ] T-010 — Deliver My Course, course overview, and lesson overview UI
 
-- **GOAL:** Connect public Continue your journey through localized account flows to correct server-derived role landing.
-- **DEPENDENCIES:** `T-008` complete on September 29, 2026.
-- **READ:** `REQUIREMENTS.md` — `FR-001..004`, `FR-018`; `FRONTEND.md` — `PG-PUBLIC-CONTINUE`, `PG-AUTH`, `PG-ROLE-LANDING`, Auth composition, Accessibility/focus; `TESTING.md` — Frontend/accessibility.
-- **REUSE:** Existing public entry, `AuthShell`, `AccountForm`, `FormErrorSummary`, `ResultNotice`, auth services, host messages/forms.
-- **TOUCH:** Confirmed public action and auth/verification/recovery/landing route files and tests.
-- **DO_NOT:** Do not protect beginner content, expose a role chooser/admin return target, infer registration preference from page locale, or optimistically authenticate.
-- **STEPS:** Add Continue action; compose login/register/verification/password-reset/logout outcomes; require explicit EL/EN preference; handle safe return and role landing; render generic expired/denied results; focus headings/result/error summaries correctly.
-- **VERIFY:** Browser and adapter tests cover anonymous public access, protected denial, complete registration/verification/login/logout/reset flows, unsafe return inputs, exact role landing, localized long-copy/error states, keyboard focus, 390px and desktop.
-- **DONE_WHEN:** A visitor crosses the advanced boundary securely and reaches the correct authenticated shell without changing public-site access.
-- **NEXT:** `T-010`.
+- **GOAL:** Expose server-authoritative catalog, ordering, starts, statuses, prerequisites, progress, and resume.
+- **DEPENDENCIES:** `T-009` complete on September 29, 2026.
+- **READ:** `REQUIREMENTS.md` — `FR-004..008`, `FR-018`; `FRONTEND.md` — `PG-MY-COURSE`, `PG-COURSE`, `PG-LESSON`, Course/Lesson composition, Accessibility/focus.
+- **REUSE:** Learner/Course shells, course/status/progress/outline/lesson/item components, learning services, and host image fallback.
+- **TOUCH:** Confirmed My Course/course/lesson route files, read/mutation adapters, localized copy, tests.
+- **DO_NOT:** Do not show draft/cross-language courses, make locked cards actionable, auto-start on open, hide prerequisite reasons, or calculate progress client-side.
+- **STEPS:** Render ordered status sections and empty state; provide Start/Continue/Resume/Open actions; render mixed grouped/ungrouped outline; implement noninteractive locked cards; handle Start Course navigation and Start Lesson in-place result/focus; provide Back/previous/next behavior and review access.
+- **VERIFY:** Browser/service integration covers filtering/order, empty state, multiple active courses, cover fallback, explicit starts, mixed outline, locked semantics/direct denial, Required/Optional labels, exact resume including unstarted lesson, completion review, language-switch suppression, 390px/desktop and keyboard/focus.
+- **DONE_WHEN:** Learners can safely discover, start, navigate, resume, and review matching courses with UI mirroring server facts.
+- **NEXT:** `T-011`.

@@ -68,11 +68,13 @@ export function EmptyState({ children, title }: { children: ReactNode; title: st
 export function ResultNotice({
   detail,
   heading,
+  id,
   nextAction,
   tone,
 }: {
   detail: ReactNode;
   heading: string;
+  id?: string;
   nextAction: ReactNode;
   tone: StateTone;
 }) {
@@ -82,6 +84,7 @@ export function ResultNotice({
       aria-live={tone === "danger" ? "assertive" : "polite"}
       className={styles.notice}
       data-state-tone={tone}
+      id={id}
       role={tone === "danger" ? "alert" : "status"}
       tabIndex={-1}
     >
@@ -94,16 +97,27 @@ export function ResultNotice({
 
 export type FieldError = { fieldId: string; message: string };
 
-export function FormErrorSummary({ errors, heading }: { errors: readonly FieldError[]; heading: string }) {
+export function FormErrorSummary({
+  errors,
+  heading,
+  id = "form-error-summary",
+}: {
+  errors: readonly FieldError[];
+  heading: string;
+  id?: string;
+}) {
+  const headingId = `${id}-heading`;
+
   return (
     <section
-      aria-labelledby="form-error-heading"
+      aria-labelledby={headingId}
       className={styles.errorSummary}
       data-state-tone="danger"
+      id={id}
       role="alert"
       tabIndex={-1}
     >
-      <h2 className={styles.heading} id="form-error-heading">
+      <h2 className={styles.heading} id={headingId}>
         {heading}
       </h2>
       <ul>

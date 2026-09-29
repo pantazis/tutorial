@@ -61,8 +61,10 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     networks:
-      - app-internal
-      - app-public
+      app-internal:
+        aliases:
+          - application
+      app-public: {}
 
   migrate:
     <<: *check-service
@@ -98,6 +100,21 @@ services:
       <<: *app-environment
       APP_ENV: test
     command: npm test
+    profiles: [checks]
+
+  browser:
+    build:
+      context: .
+      target: browser
+    environment:
+      <<: *app-environment
+      APP_ENV: test
+    depends_on:
+      app:
+        condition: service_healthy
+    command: npm run test:browser
+    networks:
+      - app-internal
     profiles: [checks]
 
   production-build:

@@ -19,6 +19,11 @@ FROM dependencies AS checks
 ENV NODE_ENV=test
 COPY . .
 
+FROM dependencies AS browser
+RUN npx playwright install --with-deps chromium
+ENV NODE_ENV=test
+COPY . .
+
 FROM dependencies AS builder
 ENV NODE_ENV=production
 COPY . .

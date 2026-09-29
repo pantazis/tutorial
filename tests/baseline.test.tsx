@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import HomePage from "@/app/page";
 import {
   AdminShell,
   CourseShell,
@@ -18,6 +17,7 @@ import {
   StatusBadge,
   TypedStateNotice,
 } from "@/components/ui";
+import { AccountField, AccountForm } from "@/features/identity/components";
 import type { AuthenticatedContext } from "@/server/auth/types";
 
 const userContext: AuthenticatedContext = {
@@ -45,7 +45,11 @@ const masterContext: AuthenticatedContext = {
 
 describe("application baseline", () => {
   it("renders one shell-owned main landmark and descriptive page heading", () => {
-    render(<HomePage />);
+    render(
+      <PublicShell locale="en" title="Advanced learning">
+        <p>Public content</p>
+      </PublicShell>,
+    );
 
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
@@ -124,7 +128,7 @@ describe("application baseline", () => {
       </AdminShell>,
     );
 
-    expect(screen.getByRole("link", { name: "My Course" })).toHaveAttribute("href", "/el/courses");
+    expect(screen.getByRole("link", { name: "My Course" })).toHaveAttribute("href", "/el/my-course");
   });
 
   it("fails closed when an administrative shell receives learner context", () => {
@@ -183,6 +187,21 @@ describe("application baseline", () => {
       "href",
       "#email",
     );
+  });
+
+  it("moves focus to an account form error summary when server feedback appears", () => {
+    render(
+      <AccountForm
+        action="/en/auth/login"
+        errorHeading="Check your login details"
+        errors={[{ fieldId: "login-email", message: "Login was not completed." }]}
+        submitLabel="Log in"
+      >
+        <AccountField id="login-email" label="Email address" name="email" type="email" />
+      </AccountForm>,
+    );
+
+    expect(screen.getByRole("alert", { name: "Check your login details" })).toHaveFocus();
   });
 
   it("renders denied states without resource-identifying details", () => {
