@@ -12,6 +12,11 @@ type CatalogRow = {
   language: Language;
   title: string;
   summary: string;
+  cover_kind: "uploaded" | "fallback";
+  cover_uri: string | null;
+  cover_alt: string;
+  focal_x: string;
+  focal_y: string;
   admin_order: number;
   started_at: Date | null;
   completed_at: Date | null;
@@ -19,6 +24,10 @@ type CatalogRow = {
 };
 
 type CourseRow = CatalogRow & {
+  group_id: string | null;
+  group_title: string | null;
+  group_summary: string | null;
+  group_position: number | null;
   lesson_id: string;
   lesson_title: string;
   lesson_summary: string;
@@ -44,7 +53,8 @@ export class LearningRepository {
   ): Promise<LearnerCatalogEntry[]> {
     const result = await queryable.query<CatalogRow>(
       `SELECT c.id AS course_id, COALESCE(g.revision_id, c.published_revision_id) AS revision_id,
-              c.language, r.title, r.summary, c.admin_order,
+              c.language, r.title, r.summary, r.cover_kind, r.cover_uri, r.cover_alt, r.focal_x, r.focal_y,
+              c.admin_order,
               cp.started_at, cp.completed_at, cp.percentage
        FROM courses c
        JOIN course_revisions r ON r.id = COALESCE(
@@ -78,15 +88,19 @@ export class LearningRepository {
            ON g.account_id = $1 AND g.course_id = c.id AND g.is_active
          WHERE c.id = $2 AND c.lifecycle_status = 'published' AND c.language = $3
        ), ordered_lessons AS (
-         SELECT l.*, row_number() OVER (
+         SELECT l.*, cg.title AS group_title, cg.summary AS group_summary,
+                cg.outline_position AS group_outline_position,
+                row_number() OVER (
            ORDER BY COALESCE(l.outline_position, cg.outline_position), COALESCE(l.group_position, 0), l.id
          )::integer - 1 AS lesson_position
          FROM selected s
          JOIN course_lessons l ON l.revision_id = s.revision_id
          LEFT JOIN course_groups cg ON cg.id = l.group_id
        )
-       SELECT s.course_id, s.revision_id, s.language, r.title, r.summary, s.admin_order,
+       SELECT s.course_id, s.revision_id, s.language, r.title, r.summary,
+              r.cover_kind, r.cover_uri, r.cover_alt, r.focal_x, r.focal_y, s.admin_order,
               cp.started_at, cp.completed_at, cp.percentage,
+              l.group_id, l.group_title, l.group_summary, l.group_outline_position AS group_position,
               l.id AS lesson_id, l.title AS lesson_title, l.summary AS lesson_summary,
               l.lesson_position,
               COALESCE(array_agg(DISTINCT prereq.prerequisite_lesson_id)
@@ -105,9 +119,11 @@ export class LearningRepository {
        LEFT JOIN learner_lesson_progress lp ON lp.generation_id = s.generation_id AND lp.lesson_id = l.id
        LEFT JOIN learner_item_progress ip ON ip.generation_id = s.generation_id AND ip.item_id = i.id
        LEFT JOIN meditation_contents mc ON mc.item_id = i.id
-       GROUP BY s.course_id, s.revision_id, s.language, r.title, r.summary, s.admin_order,
+       GROUP BY s.course_id, s.revision_id, s.language, r.title, r.summary,
+                r.cover_kind, r.cover_uri, r.cover_alt, r.focal_x, r.focal_y, s.admin_order,
                 cp.started_at, cp.completed_at, cp.percentage,
-                l.id, l.title, l.summary, l.lesson_position,
+                 l.group_id, l.group_title, l.group_summary, l.group_outline_position,
+                 l.id, l.title, l.summary, l.lesson_position,
                 lp.started_at, lp.completed_at, lp.percentage,
                 i.id, i.item_type, i.title, i.summary, i.is_required, i.item_position,
                 mc.format, ip.completed_at
@@ -128,6 +144,14 @@ export class LearningRepository {
           title: row.lesson_title,
           summary: row.lesson_summary,
           position: row.lesson_position,
+          group: row.group_id
+            ? {
+                id: row.group_id,
+                title: row.group_title!,
+                summary: row.group_summary!,
+                position: row.group_position!,
+              }
+            : null,
           prerequisiteLessonIds: row.prerequisite_ids,
           status: !unlocked
             ? "locked"
@@ -162,6 +186,7 @@ export class LearningRepository {
       language: header.language,
       title: header.title,
       summary: header.summary,
+      cover: mapCover(header),
       status: header.completed_at ? "completed" : header.started_at ? "in_progress" : "available",
       percentage: header.percentage ?? 0,
       startedAt: header.started_at,
@@ -178,10 +203,21 @@ function mapCatalog(row: CatalogRow): LearnerCatalogEntry {
     language: row.language,
     title: row.title,
     summary: row.summary,
+    cover: mapCover(row),
     adminOrder: row.admin_order,
     status: row.completed_at ? "completed" : row.started_at ? "in_progress" : "available",
     percentage: row.percentage ?? 0,
     startedAt: row.started_at,
     completedAt: row.completed_at,
+  };
+}
+
+function mapCover(row: CatalogRow) {
+  return {
+    kind: row.cover_kind,
+    uri: row.cover_uri,
+    alt: row.cover_alt,
+    focalX: Number(row.focal_x),
+    focalY: Number(row.focal_y),
   };
 }

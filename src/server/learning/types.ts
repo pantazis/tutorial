@@ -9,11 +9,20 @@ export type LearnerCatalogEntry = {
   language: Language;
   title: string;
   summary: string;
+  cover: LearnerCourseCover;
   adminOrder: number;
   status: CourseStatus;
   percentage: number;
   startedAt: Date | null;
   completedAt: Date | null;
+};
+
+export type LearnerCourseCover = {
+  kind: "uploaded" | "fallback";
+  uri: string | null;
+  alt: string;
+  focalX: number;
+  focalY: number;
 };
 
 export type LearnerItem = {
@@ -32,6 +41,7 @@ export type LearnerLesson = {
   title: string;
   summary: string;
   position: number;
+  group: { id: string; title: string; summary: string; position: number } | null;
   prerequisiteLessonIds: string[];
   status: LessonStatus;
   lockReason: string | null;
@@ -47,6 +57,7 @@ export type LearnerCourse = {
   language: Language;
   title: string;
   summary: string;
+  cover: LearnerCourseCover;
   status: CourseStatus;
   percentage: number;
   startedAt: Date | null;

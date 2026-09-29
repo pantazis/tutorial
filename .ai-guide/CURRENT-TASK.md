@@ -2,15 +2,15 @@
 
 STATUS: READY
 
-### [ ] T-010 — Deliver My Course, course overview, and lesson overview UI
+### [ ] T-011 — Deliver tutorial, meditation, quiz, result, and attempt-history UI
 
-- **GOAL:** Expose server-authoritative catalog, ordering, starts, statuses, prerequisites, progress, and resume.
-- **DEPENDENCIES:** `T-009` complete on September 29, 2026.
-- **READ:** `REQUIREMENTS.md` — `FR-004..008`, `FR-018`; `FRONTEND.md` — `PG-MY-COURSE`, `PG-COURSE`, `PG-LESSON`, Course/Lesson composition, Accessibility/focus.
-- **REUSE:** Learner/Course shells, course/status/progress/outline/lesson/item components, learning services, and host image fallback.
-- **TOUCH:** Confirmed My Course/course/lesson route files, read/mutation adapters, localized copy, tests.
-- **DO_NOT:** Do not show draft/cross-language courses, make locked cards actionable, auto-start on open, hide prerequisite reasons, or calculate progress client-side.
-- **STEPS:** Render ordered status sections and empty state; provide Start/Continue/Resume/Open actions; render mixed grouped/ungrouped outline; implement noninteractive locked cards; handle Start Course navigation and Start Lesson in-place result/focus; provide Back/previous/next behavior and review access.
-- **VERIFY:** Browser/service integration covers filtering/order, empty state, multiple active courses, cover fallback, explicit starts, mixed outline, locked semantics/direct denial, Required/Optional labels, exact resume including unstarted lesson, completion review, language-switch suppression, 390px/desktop and keyboard/focus.
-- **DONE_WHEN:** Learners can safely discover, start, navigate, resume, and review matching courses with UI mirroring server facts.
-- **NEXT:** `T-011`.
+- **GOAL:** Provide accessible item completion and quiz flows over authoritative services.
+- **DEPENDENCIES:** `T-010` complete on September 29, 2026.
+- **READ:** `REQUIREMENTS.md` — `FR-009..010`, `FR-018`, `NFR-004..006`, `NFR-010`; `FRONTEND.md` — learning-item and quiz `PG-*`, composition, accessibility/media rules.
+- **REUSE:** Course shell, content blocks, media frame, completion result, item navigation, quiz form/question fieldsets, attempt history, host media/CSP primitives.
+- **TOUCH:** Confirmed learning-item/quiz route files, adapters, media integration, localized copy, tests.
+- **DO_NOT:** Do not persist exact position, expose Complete Tutorial early, claim end signals prove learning, reorder an active attempt, add free text, or reveal answers beyond server policy.
+- **STEPS:** Render purpose-built tutorial blocks/end gate; send validated meditation end intent for text/audio/video; present transcript/captions/direct fallback; render snapshotted questions/options and accessible validation; show score/pass/fail/reveal/remaining/wait/reset states and immutable cycle history.
+- **VERIFY:** Browser/service tests cover top/start reopening, tutorial end plus explicit action, media/text automatic end pending/result, accessible fallback, all quiz types, unanswered announcement, stable active order, reveal policy, finite/unlimited and timed/admin exhaustion, pass lockout, history/empty state, item navigation, 390px/desktop, reduced motion and keyboard/screen-reader semantics.
+- **DONE_WHEN:** Every item type completes only through its factual server rule and all quiz states remain accessible and reproducible.
+- **NEXT:** `T-012`.

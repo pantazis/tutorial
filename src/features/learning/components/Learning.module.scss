@@ -1,0 +1,132 @@
+.intro,
+.summary {
+  max-inline-size: var(--container-reading);
+}
+
+.sections,
+.outline,
+.items {
+  display: grid;
+  gap: var(--space-8);
+  margin-block-start: var(--space-8);
+}
+
+.sectionHeading,
+.groupHeading,
+.cardTitle,
+.itemTitle {
+  font-family: var(--font-interface);
+}
+
+.cardGrid {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card,
+.lessonCard,
+.item {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+}
+
+.cover {
+  display: grid;
+  min-block-size: 9rem;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background-color: var(--color-surface-subtle);
+  background-position: var(--cover-x, 50%) var(--cover-y, 50%);
+  background-size: cover;
+  color: var(--color-text);
+  font-family: var(--font-interface);
+  font-weight: 700;
+  place-items: center;
+  text-align: center;
+}
+
+.meta,
+.actions,
+.navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.action,
+.button {
+  display: inline-flex;
+  min-block-size: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-small);
+  background: var(--color-action);
+  color: var(--color-action-contrast);
+  font: inherit;
+  font-family: var(--font-interface);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.secondary {
+  background: var(--color-surface);
+  color: var(--color-action);
+}
+
+.locked {
+  border-color: var(--color-locked);
+  background: var(--color-surface-subtle);
+}
+
+.reason {
+  color: var(--color-locked);
+  font-family: var(--font-interface);
+  font-weight: 700;
+}
+
+.group {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-inline-start: 0.25rem solid var(--color-border);
+}
+
+.itemLink {
+  color: inherit;
+  font-weight: 700;
+}
+
+@media (min-width: 52rem) {
+  .cardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card {
+    grid-template-columns: minmax(10rem, 0.65fr) minmax(0, 1fr);
+  }
+
+  .cover {
+    grid-row: 1 / span 5;
+  }
+}
+
+@media (forced-colors: active) {
+  .card,
+  .lessonCard,
+  .item,
+  .cover,
+  .group {
+    border-color: CanvasText;
+  }
+}
