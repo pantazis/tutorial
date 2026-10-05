@@ -51,6 +51,7 @@ flowchart TD
     CV[CourseCard / CourseOutline / LessonCard / LessonItemList]
     LI[ContentBlocks / MediaFrame / ItemNavigation]
     QV[QuizAttemptForm / QuizResult / AttemptHistory]
+    LU[ProgressHistory / NotificationList]
     AV[FilterBar / DataView / OrderEditor]
     GV[GovernanceTimeline / PublicationBlockers / ImpactPreview / ConfirmDialog]
 
@@ -61,6 +62,7 @@ flowchart TD
     SHARED --> CV
     SHARED --> LI
     SHARED --> QV
+    SHARED --> LU
     SHARED --> AV
     SHARED --> GV
 
@@ -75,10 +77,13 @@ flowchart TD
     PGMC --> RN
     PGP --> PH
     PGP --> RN
+    PGP --> LU
     PGMP --> PH
     PGMP --> SB
+    PGMP --> LU
     PGN --> PH
     PGN --> RN
+    PGN --> LU
     PGH --> PH
     PGH --> RN
     PGCO --> CV

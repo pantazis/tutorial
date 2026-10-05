@@ -2,15 +2,15 @@
 
 STATUS: READY
 
-### [ ] T-012 — Deliver learner utilities, preference change, notifications, export, and deletion boundary
+### [ ] T-013 — Deliver administration course editors, ordering, governance, publication, and preview
 
-- **GOAL:** Complete self-service factual learner views without exceeding approved privacy policy.
-- **DEPENDENCIES:** `T-011` complete on October 5, 2026.
-- **READ:** `REQUIREMENTS.md` — `FR-004`, `FR-014..015`, `NFR-003..006`; `ARCHITECTURE.md` — Notifications/reporting/preview/data rights; `DECISIONS.md` — GATE-PRIVACY-001; `FRONTEND.md` — learner utility `PG-*`.
-- **REUSE:** Learner shell, factual history, notification/empty/result/confirmation primitives, export and preference services.
-- **TOUCH:** Confirmed profile/progress/notifications/help/history routes, adapters, export response, policy-safe deletion state, tests.
-- **DO_NOT:** Do not add unread state, mutate old notifications/progress on language change, expose another learner, or implement destructive field treatment without approved retention/deletion authority.
-- **STEPS:** Render/update profile and preferred language outside courses; route to matching My Course after change; render factual progress/history, notification chronology/empty state, localized help, export, logout, and an explicit unavailable/approved-policy deletion flow as authority permits.
-- **VERIFY:** Tests prove self-only access, immediate interface/catalog language change with prior progress/history unchanged, no in-course switch, notification chronology/no unread controls, export completeness, empty states, deletion fail-closed or approved behavior, local date rendering, keyboard/focus, 390px/desktop.
-- **DONE_WHEN:** Learner utilities satisfy self-service requirements and all destructive privacy behavior is either verified against approved policy or explicitly blocked.
-- **NEXT:** `T-013`.
+- **GOAL:** Provide English-only purpose-built content administration over revisioned governed services.
+- **DEPENDENCIES:** `T-012` complete on October 5, 2026.
+- **READ:** `REQUIREMENTS.md` — `FR-011..012`, `FR-018`, `NFR-010`; `FRONTEND.md` — administration course/lesson/governance/preview `PG-*` and admin composition.
+- **REUSE:** Admin/Preview shells, list/filter/data/editor/order/governance/blocker/confirm/result components, content/governance services, learner rendering components.
+- **TOUCH:** Confirmed admin dashboard/course/lesson/governance/preview routes, adapters, forms, tests.
+- **DO_NOT:** Do not create a generic page builder/CMS, mix languages in a course, mutate published revisions, publish on Save, impersonate learners, or invent content/media.
+- **STEPS:** Implement All/EL/EN course list/order/create; revision-aware course/cover/source/outline/prerequisite editors; purpose-built tutorial/meditation/quiz fields; Save/conflict states; review evidence and publication blockers; destructive confirmations; no-write learner preview and archive/unpublish flows.
+- **VERIFY:** Browser/service integration covers authorization, language-fixed creation, order/prerequisite validation, required defaults, accessible media metadata, draft/save conflict, human review and publication boundaries, notification trigger, unpublish/archive history, preview no writes, EL content `lang` inside English chrome, 390px/desktop and keyboard/forms/dialog focus.
+- **DONE_WHEN:** Administrators can govern and preview valid content without bypassing revision, review, publication, or learner-history protections.
+- **NEXT:** `T-014`.

@@ -17,3 +17,4 @@ export const loginSchema = z
 
 export const passwordSchema = z.string().min(12).max(128);
 export const emailSchema = z.string().trim().email().max(320).transform((value) => value.toLowerCase());
+export const preferredLanguageSchema = z.enum(["EL", "EN"]);

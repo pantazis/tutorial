@@ -8,7 +8,7 @@ import { withTransaction } from "@/server/db/transaction";
 import type { MailTransport } from "@/server/mail/transport";
 
 import { createOpaqueToken, hashOpaqueToken, hashPassword, verifyPassword } from "./crypto";
-import { emailSchema, loginSchema, passwordSchema, registrationSchema } from "./validation";
+import { emailSchema, loginSchema, passwordSchema, preferredLanguageSchema, registrationSchema } from "./validation";
 import type { AuthenticatedContext, Language, Role, ServiceResult } from "./types";
 
 const SESSION_LIFETIME_MS = 1000 * 60 * 60 * 24 * 30;
@@ -217,6 +217,30 @@ export class IdentityService {
       await client.query("UPDATE auth_sessions SET revoked_at = statement_timestamp() WHERE id = $1", [context.sessionId]);
       await audit(client, "session_revoked", context.accountId, context.accountId, { sessionId: context.sessionId });
       return { ok: true, value: null };
+    });
+  }
+
+  async updatePreferredLanguage(
+    sessionToken: string,
+    languageInput: unknown,
+  ): Promise<ServiceResult<{ language: Language }>> {
+    const parsed = preferredLanguageSchema.safeParse(languageInput);
+    if (!parsed.success) return failure("validation", "Preferred language is invalid.");
+
+    return withTransaction(this.pool, async (client) => {
+      const context = await loadAuthenticated(client, sessionToken, true);
+      if (!context) return failure("unauthenticated", "Authentication is required.");
+      if (context.language === parsed.data) return { ok: true, value: { language: parsed.data } };
+
+      await client.query(
+        "UPDATE accounts SET preferred_language = $1, updated_at = statement_timestamp() WHERE id = $2",
+        [parsed.data, context.accountId],
+      );
+      await audit(client, "preferred_language_changed", context.accountId, context.accountId, {
+        from: context.language,
+        to: parsed.data,
+      });
+      return { ok: true, value: { language: parsed.data } };
     });
   }
 
