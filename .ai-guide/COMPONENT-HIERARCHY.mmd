@@ -54,6 +54,8 @@ flowchart TD
     LU[ProgressHistory / NotificationList]
     AV[FilterBar / DataView / OrderEditor]
     GV[GovernanceTimeline / PublicationBlockers / ImpactPreview / ConfirmDialog]
+    AC[AdminCourseList / CourseEditor / LessonEditor]
+    AG[GovernanceView / ConfirmLifecycle / AdminPreview]
 
     SHARED --> PH
     SHARED --> RN
@@ -65,6 +67,8 @@ flowchart TD
     SHARED --> LU
     SHARED --> AV
     SHARED --> GV
+    SHARED --> AC
+    SHARED --> AG
 
     PGA --> FE
     PGA --> RN
@@ -101,14 +105,19 @@ flowchart TD
     PGAH --> PH
     PGAH --> RN
     PGACS --> AV
+    PGACS --> AC
     PGACS --> RN
     PGAC --> AV
+    PGAC --> AC
     PGAC --> RN
     PGAL --> AV
+    PGAL --> AC
     PGAL --> RN
     PGAG --> GV
+    PGAG --> AG
     PGAP --> CV
     PGAP --> GV
+    PGAP --> AG
     PGALS --> AV
     PGALS --> RN
     PGALR --> AV

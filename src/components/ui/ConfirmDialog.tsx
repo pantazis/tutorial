@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, type KeyboardEvent, type ReactNode, type RefObject } from "react";
 
 import styles from "./SemanticState.module.scss";
 
@@ -10,6 +10,7 @@ export function ConfirmDialog({
   confirmLabel,
   onCancel,
   onConfirm,
+  returnFocusRef,
   title,
 }: {
   cancelLabel: string;
@@ -17,17 +18,18 @@ export function ConfirmDialog({
   confirmLabel: string;
   onCancel: () => void;
   onConfirm: () => void;
+  returnFocusRef?: RefObject<HTMLElement | null>;
   title: string;
 }) {
   const dialogRef = useRef<HTMLElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previouslyFocused = returnFocusRef?.current ?? document.activeElement as HTMLElement | null;
     cancelRef.current?.focus();
 
     return () => previouslyFocused?.focus();
-  }, []);
+  }, [returnFocusRef]);
 
   function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (event.key === "Escape") {

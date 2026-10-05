@@ -10,7 +10,7 @@ import { withTransaction } from "@/server/db/transaction";
 import { materializePublicationNotifications } from "@/server/notifications/service";
 
 import { CourseRepository } from "./repository";
-import type { CourseItemInput, CourseReadModel, CourseRevisionInput, StoredCourseRevision } from "./types";
+import type { AdminCourseDetail, AdminCourseListEntry, CourseItemInput, CourseReadModel, CourseRevisionInput, StoredCourseRevision } from "./types";
 import { courseRevisionSchema, validateRevisionSemantics } from "./validation";
 
 function failure<T>(code: "validation" | "unauthenticated" | "denied" | "conflict" | "transient", message: string): ServiceResult<T> {
@@ -42,6 +42,21 @@ export class CourseService {
 
   constructor(private readonly pool: Pool) {
     this.repository = new CourseRepository(pool);
+  }
+
+  async listAdministration(sessionToken: string, language?: "EL" | "EN"): Promise<ServiceResult<AdminCourseListEntry[]>> {
+    return withTransaction(this.pool, async (client) => {
+      if (!(await requireAdministrator(client, sessionToken))) return failure("denied", "Operation is not permitted.");
+      return { ok: true, value: await this.repository.listAdministration(client, language) };
+    });
+  }
+
+  async loadAdministration(sessionToken: string, courseId: string): Promise<ServiceResult<AdminCourseDetail>> {
+    return withTransaction(this.pool, async (client) => {
+      if (!(await requireAdministrator(client, sessionToken))) return failure("denied", "Operation is not permitted.");
+      const detail = await this.repository.loadAdministration(client, courseId);
+      return detail ? { ok: true, value: detail } : failure("denied", "Course is unavailable.");
+    });
   }
 
   async createCourse(sessionToken: string, input: unknown): Promise<ServiceResult<StoredCourseRevision>> {

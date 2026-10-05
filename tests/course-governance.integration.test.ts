@@ -28,6 +28,16 @@ async function createAdministrator(email = "course-admin@example.test") {
   return { accountId: registration.value.accountId, sessionToken: login.value.sessionToken };
 }
 
+async function createLearner(email = "course-learner@example.test", language: "EL" | "EN" = "EN") {
+  const registration = await identity.register({ email, password, preferredLanguage: language });
+  if (!registration.ok) throw new Error(registration.message);
+  const verification = await identity.verifyAccount(await identity.issueVerificationToken(registration.value.accountId));
+  if (!verification.ok) throw new Error(verification.message);
+  const login = await identity.login({ email, password });
+  if (!login.ok) throw new Error(login.message);
+  return { accountId: registration.value.accountId, sessionToken: login.value.sessionToken };
+}
+
 function validCourse(language: "EL" | "EN" = "EN"): CourseRevisionInput {
   return {
     language,
@@ -139,6 +149,84 @@ afterAll(async () => {
 });
 
 describe("revisioned course and governance core", () => {
+  it("authorizes administration reads, filters language-fixed courses, and reconstructs purpose-built draft input", async () => {
+    const admin = await createAdministrator();
+    const learner = await createLearner();
+    const englishInput = validCourse("EN");
+    const greekInput = validCourse("EL");
+    greekInput.adminOrder = 0;
+    const english = await courses.createCourse(admin.sessionToken, englishInput);
+    const greek = await courses.createCourse(admin.sessionToken, greekInput);
+    if (!english.ok || !greek.ok) throw new Error("course creation failed");
+
+    await expect(courses.listAdministration(learner.sessionToken)).resolves.toMatchObject({ ok: false, code: "denied" });
+    await expect(courses.loadAdministration(learner.sessionToken, english.value.courseId)).resolves.toMatchObject({ ok: false, code: "denied" });
+
+    const all = await courses.listAdministration(admin.sessionToken);
+    expect(all.ok && all.value.map((course) => [course.language, course.adminOrder, course.title])).toEqual([
+      ["EL", 0, "Ανεξάρτητο ελληνικό μάθημα"],
+      ["EN", 2, "Independent English course"],
+    ]);
+    const englishOnly = await courses.listAdministration(admin.sessionToken, "EN");
+    expect(englishOnly.ok && englishOnly.value.map((course) => course.courseId)).toEqual([english.value.courseId]);
+
+    const detail = await courses.loadAdministration(admin.sessionToken, english.value.courseId);
+    if (!detail.ok) throw new Error(detail.message);
+    expect(detail.value.blockers).toEqual([
+      "Current Language Review approval is required.",
+      "Current Sahaja Review approval is required.",
+    ]);
+    expect(detail.value.input).toMatchObject({
+      language: "EN",
+      cover: { kind: "fallback", alt: "FreeMeditation branded course cover" },
+      source: { title: "Authoritative test source", attribution: "Integration test attribution" },
+    });
+    const reconstructedLessons = detail.value.input.outline.flatMap((node) => node.type === "lesson" ? [node] : node.lessons);
+    expect(reconstructedLessons.map((lesson) => lesson.title)).toEqual(["Opening lesson", "Practice lesson", "Closing lesson"]);
+    expect(reconstructedLessons[1].items).toMatchObject([
+      { type: "guided_meditation", format: "text", body: "Meditation body", required: true },
+      { type: "quiz", passPercentage: 70, attemptLimit: 3, revealPolicy: "after_submission", required: false },
+    ]);
+
+    const roundTrip = await courses.saveDraft(
+      admin.sessionToken,
+      english.value.courseId,
+      detail.value.course.revisionId,
+      detail.value.course.version,
+      detail.value.input,
+    );
+    expect(roundTrip).toMatchObject({ ok: true, value: { version: 2 } });
+    const prerequisites = await pool.query<{ count: number }>(
+      "SELECT count(*)::integer AS count FROM lesson_prerequisites WHERE revision_id = $1",
+      [english.value.revisionId],
+    );
+    expect(prerequisites.rows[0].count).toBe(3);
+  });
+
+  it("reports current-version governance blockers and immutable lifecycle history to administration", async () => {
+    const admin = await createAdministrator();
+    const created = await courses.createCourse(admin.sessionToken, validCourse());
+    if (!created.ok) throw new Error(created.message);
+    await approve(admin.sessionToken, created.value.revisionId, 1);
+
+    const approved = await courses.loadAdministration(admin.sessionToken, created.value.courseId);
+    if (!approved.ok) throw new Error(approved.message);
+    expect(approved.value.blockers).toEqual([]);
+    expect(approved.value.reviews.map((review) => [review.reviewType, review.decision, review.revisionVersion])).toEqual(
+      expect.arrayContaining([["language", "approved", 1], ["sahaja", "approved", 1]]),
+    );
+
+    const publication = await courses.publish(admin.sessionToken, created.value.courseId, created.value.revisionId, 1);
+    if (!publication.ok) throw new Error(publication.message);
+    await courses.unpublish(admin.sessionToken, created.value.courseId);
+    await courses.archive(admin.sessionToken, created.value.courseId);
+    const archived = await courses.loadAdministration(admin.sessionToken, created.value.courseId);
+    if (!archived.ok) throw new Error(archived.message);
+    expect(archived.value.course).toMatchObject({ lifecycleStatus: "archived", revisionState: "published" });
+    expect(archived.value.blockers).toEqual(["Create and save a new draft before requesting reviews."]);
+    expect(archived.value.publicationHistory.map((entry) => entry.action)).toEqual(["archived", "unpublished", "published"]);
+  });
+
   it("persists independent EL/EN courses, mixed deterministic ordering, defaults, and sequential prerequisites", async () => {
     const admin = await createAdministrator();
     const english = await courses.createCourse(admin.sessionToken, validCourse("EN"));

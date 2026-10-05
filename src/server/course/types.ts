@@ -82,3 +82,41 @@ export type CourseReadModel = {
     }>;
   }>;
 };
+
+export type AdminCourseListEntry = {
+  courseId: string;
+  language: Language;
+  adminOrder: number;
+  lifecycleStatus: "draft" | "published" | "unpublished" | "archived";
+  revisionId: string;
+  revisionNumber: number;
+  version: number;
+  revisionState: "draft" | "published";
+  title: string;
+  updatedAt: string;
+};
+
+export type GovernanceReview = {
+  id: string;
+  reviewType: "language" | "sahaja";
+  decision: "approved" | "rejected";
+  notes: string;
+  reviewerEmail: string;
+  revisionVersion: number;
+  decidedAt: string;
+};
+
+export type PublicationHistoryEntry = {
+  id: string;
+  action: "published" | "unpublished" | "archived";
+  actorEmail: string;
+  occurredAt: string;
+};
+
+export type AdminCourseDetail = {
+  course: AdminCourseListEntry;
+  input: CourseRevisionInput;
+  reviews: GovernanceReview[];
+  publicationHistory: PublicationHistoryEntry[];
+  blockers: string[];
+};

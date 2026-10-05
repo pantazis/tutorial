@@ -1,0 +1,82 @@
+.sections,
+.list,
+.form,
+.fieldGroup,
+.actions,
+.timeline,
+.outline {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.sections { gap: var(--space-8); margin-block-start: var(--space-6); }
+.list, .timeline, .outline { margin: 0; padding: 0; list-style: none; }
+
+.panel,
+.card,
+.timelineItem,
+.outlineItem {
+  display: grid;
+  min-inline-size: 0;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+}
+
+.form label,
+.legend { font-family: var(--font-interface); font-weight: 700; }
+.form input,
+.form textarea,
+.form select {
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+.form textarea { min-block-size: 7rem; resize: vertical; }
+.form fieldset { margin: 0; padding: var(--space-4); border: 1px solid var(--color-border); }
+.form legend { padding-inline: var(--space-2); }
+
+.meta,
+.actions,
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.button,
+.action {
+  display: inline-flex;
+  min-block-size: 2.75rem;
+  inline-size: fit-content;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-small);
+  background: var(--color-action);
+  color: var(--color-action-contrast);
+  font: 700 1rem/1.2 var(--font-interface);
+  text-decoration: none;
+}
+.secondary { background: var(--color-surface); color: var(--color-action); }
+.danger { border-color: var(--color-danger); background: var(--color-danger); }
+.languageFragment { overflow-wrap: anywhere; }
+.blockers { border-inline-start: 0.35rem solid var(--color-warning); }
+.codeHint { color: var(--color-text-muted); font-family: var(--font-interface); font-size: 0.9rem; }
+
+@media (min-width: 52rem) {
+  .list[data-columns="two"], .fieldGroup[data-columns="two"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (forced-colors: active) {
+  .panel, .card, .timelineItem, .outlineItem, .button, .action { border-color: CanvasText; }
+}

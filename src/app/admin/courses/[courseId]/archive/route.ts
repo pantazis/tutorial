@@ -1,0 +1,3 @@
+import type { NextRequest } from "next/server";
+import { adminCourseRequest, adminRedirect, isAdminIdentifier, rejectAdminCrossOrigin } from "@/features/admin-course/server/adapter";
+export async function POST(request: NextRequest, { params }: { params: Promise<{ courseId: string }> }) { const { courseId } = await params; const denied = rejectAdminCrossOrigin(request); if (denied) return denied; if (!isAdminIdentifier(courseId)) return adminRedirect(request, "/admin/courses?result=error"); const { service, sessionToken } = await adminCourseRequest(); const result = await service.archive(sessionToken, courseId); return adminRedirect(request, `/admin/courses/${courseId}/governance?result=${result.ok ? "archived" : result.code === "conflict" ? "conflict" : "error"}`); }
