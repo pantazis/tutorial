@@ -1,12 +1,15 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 
-import { ProgressSummary, RequirementLabel, StatusBadge } from "@/components/ui";
+import { EmptyState, ProgressSummary, RequirementLabel, StatusBadge, Timestamp } from "@/components/ui";
 import type { Locale } from "@/i18n";
 import type { CourseStatus, LearnerCatalogEntry, LearnerCourse, LearnerCourseCover, LearnerItem, LearnerLesson } from "@/server/learning/types";
+import type { LearnerItemView } from "@/server/learning/types";
+import type { QuizAttempt, QuizLearnerState } from "@/server/quiz/types";
 
 import { courseStatusLabel, getLearningCopy, lessonStatusLabel } from "../copy";
 import styles from "./Learning.module.scss";
+import { MeditationEndControl, QuizAttemptForm, TutorialEndGate } from "./ItemInteractions";
 
 const tone = (status: CourseStatus | LearnerLesson["status"]) =>
   status === "completed" ? "success" : status === "in_progress" ? "information" : status === "locked" ? "warning" : "information";
@@ -133,6 +136,97 @@ export function LessonNavigation({ course, lesson, locale }: { course: LearnerCo
     ? <Link className={`${styles.action} ${styles.secondary}`} href={`/${locale}/courses/${course.courseId}/lessons/${candidate.id}`}>{label}: {candidate.title}</Link>
     : null;
   return <nav aria-label={copy.learningPoints} className={styles.navigation}>{link(previous, copy.previousLesson)}{link(next, copy.nextLesson)}</nav>;
+}
+
+function bodyBlocks(body: string) {
+  return body.split(/\n\s*\n/u).map((block) => block.trim()).filter(Boolean);
+}
+
+export function ContentBlocks({ body }: { body: string }) {
+  return <div className={styles.contentBlocks}>{bodyBlocks(body).map((block, index) => <section className={styles.contentBlock} key={`${index}:${block.slice(0, 24)}`}><p className={styles.prose}>{block}</p></section>)}</div>;
+}
+
+export function LearningItemContent({ locale, view }: { locale: Locale; view: LearnerItemView }) {
+  const copy = getLearningCopy(locale);
+  const base = `/${locale}/courses/${view.course.courseId}/lessons/${view.lesson.id}/items/${view.item.id}`;
+  if (view.content.kind === "tutorial") {
+    return <><ContentBlocks body={view.content.body} /><TutorialEndGate completeAction={`${base}/complete`} copy={copy} endAction={`${base}/end`} endReached={view.endReached} /></>;
+  }
+  if (view.content.kind === "meditation") {
+    return (
+      <section className={styles.mediaFrame}>
+        {view.content.body ? <ContentBlocks body={view.content.body} /> : null}
+        <MeditationEndControl action={`${base}/complete`} captionsUri={view.content.captionsUri} copy={copy} format={view.content.format} mediaUri={view.content.mediaUri} />
+        {view.content.transcript ? <details><summary>{copy.transcript}</summary><p className={styles.prose}>{view.content.transcript}</p></details> : null}
+        {view.content.captionsUri ? <p><a href={view.content.captionsUri}>{copy.captions}</a></p> : null}
+        {view.content.directFallbackUri ? <p><a href={view.content.directFallbackUri}>{copy.directFallback}</a></p> : null}
+        {!view.content.mediaUri && view.content.format !== "text" ? <p>{copy.mediaUnavailable}</p> : null}
+        <p><strong>{copy.attribution}:</strong> {view.content.attribution}</p>
+      </section>
+    );
+  }
+  return null;
+}
+
+export function ItemNavigation({ locale, view }: { locale: Locale; view: LearnerItemView }) {
+  const copy = getLearningCopy(locale);
+  const index = view.lesson.items.findIndex((item) => item.id === view.item.id);
+  const itemLink = (item: LearnerItem | undefined, label: string) => item
+    ? <Link className={`${styles.action} ${styles.secondary}`} href={`/${locale}/courses/${view.course.courseId}/lessons/${view.lesson.id}/items/${item.id}`}>{label}: {item.title}</Link>
+    : null;
+  return (
+    <nav aria-label={copy.learningPoints} className={styles.navigation}>
+      <Link className={`${styles.action} ${styles.secondary}`} href={`/${locale}/courses/${view.course.courseId}/lessons/${view.lesson.id}`}>{copy.backToLesson}</Link>
+      {itemLink(view.lesson.items[index - 1], copy.previousItem)}
+      {itemLink(view.lesson.items[index + 1], copy.nextItem)}
+    </nav>
+  );
+}
+
+export function QuizPanel({ locale, state, view }: { locale: Locale; state: QuizLearnerState; view: LearnerItemView }) {
+  const copy = getLearningCopy(locale);
+  const base = `/${locale}/courses/${view.course.courseId}/lessons/${view.lesson.id}/items/${view.item.id}`;
+  if (state.activeAttempt) return <QuizAttemptForm action={`${base}/quiz/submit`} attempt={state.activeAttempt} copy={copy} />;
+  const latest = [...state.attempts].reverse().find((attempt) => attempt.submittedAt);
+  return (
+    <section className={styles.quiz}>
+      {state.passed ? <p>{copy.quizPassedLocked}</p> : null}
+      {state.waitKind === "timed" && state.nextEligibleAt ? <p>{copy.timedWait} <Timestamp date={state.nextEligibleAt} locale={locale} />.</p> : null}
+      {state.waitKind === "administrator" ? <p>{copy.administratorReset}</p> : null}
+      {state.canStart ? <form action={`${base}/quiz/start`} method="post"><button className={styles.button} type="submit">{latest ? copy.tryAgain : copy.startQuiz}</button></form> : null}
+      {latest ? <Link className={styles.action} href={`${base}/result/${latest.id}`}>{copy.viewResult}</Link> : null}
+      <Link className={`${styles.action} ${styles.secondary}`} href={`${base}/history`}>{copy.attemptHistory}</Link>
+    </section>
+  );
+}
+
+export function QuizResult({ attempt, locale }: { attempt: QuizAttempt; locale: Locale }) {
+  const copy = getLearningCopy(locale);
+  const remaining = attempt.attemptLimit === null ? null : Math.max(0, attempt.attemptLimit - attempt.attemptNumber);
+  return (
+    <section aria-live="polite" className={styles.quiz}>
+      <h2>{copy.quizResult}</h2>
+      <StatusBadge label={attempt.passed ? copy.passed : copy.failed} tone={attempt.passed ? "success" : "warning"} />
+      <p><strong>{copy.score}:</strong> {attempt.scorePercentage}%</p>
+      <p><strong>{copy.passRequired}:</strong> {attempt.passPercentage}%</p>
+      <p>{remaining === null ? copy.unlimitedAttempts : `${copy.attemptsRemaining}: ${remaining}`}</p>
+      {attempt.correctOptionIds ? (
+        <section><h3>{copy.correctAnswers}</h3>{attempt.questions.map((question) => <div className={styles.answerState} key={question.id}><strong>{question.prompt}</strong><ul>{question.options.filter((option) => attempt.correctOptionIds?.[question.id]?.includes(option.id)).map((option) => <li key={option.id}>{option.label}</li>)}</ul></div>)}</section>
+      ) : <p>{copy.answersNotRevealed}</p>}
+    </section>
+  );
+}
+
+export function AttemptHistory({ attempts, basePath, locale }: { attempts: QuizAttempt[]; basePath: string; locale: Locale }) {
+  const copy = getLearningCopy(locale);
+  const submitted = attempts.filter((attempt) => attempt.submittedAt);
+  if (submitted.length === 0) return <EmptyState title={copy.attemptHistory}><p>{copy.historyEmpty}</p></EmptyState>;
+  return (
+    <section className={styles.history}>
+      <h2>{copy.attemptHistory}</h2>
+      <ol className={styles.historyList}>{submitted.map((attempt) => <li className={styles.historyItem} key={attempt.id}><strong>{copy.cycle} {attempt.cycleNumber}, {copy.attempt} {attempt.attemptNumber}</strong><span>{copy.score}: {attempt.scorePercentage}% — {attempt.passed ? copy.passed : copy.failed}</span>{attempt.submittedAt ? <Timestamp date={attempt.submittedAt} locale={locale} /> : null}<Link href={`${basePath}/result/${attempt.id}`}>{copy.viewResult}</Link></li>)}</ol>
+    </section>
+  );
 }
 
 export const learningStyles = styles;

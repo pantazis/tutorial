@@ -3,14 +3,23 @@ import "server-only";
 import { currentSessionToken } from "@/features/identity/server/adapter";
 import { getPool } from "@/server/db/pool";
 import { LearningService } from "@/server/learning/service";
+import { QuizService } from "@/server/quiz/service";
 import type { ResumeTarget } from "@/server/learning/types";
 
 export function getLearningService() {
   return new LearningService(getPool());
 }
 
+export function getQuizService() {
+  return new QuizService(getPool());
+}
+
 export async function learningRequest() {
   return { service: getLearningService(), sessionToken: await currentSessionToken() };
+}
+
+export async function quizRequest() {
+  return { service: getQuizService(), sessionToken: await currentSessionToken() };
 }
 
 export function isIdentifier(value: string) {

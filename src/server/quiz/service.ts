@@ -11,7 +11,7 @@ import { withTransaction } from "@/server/db/transaction";
 import { LearningService } from "@/server/learning/service";
 
 import { QuizRepository } from "./repository";
-import type { QuizAttempt, QuizQuestionType, QuizSubmission } from "./types";
+import type { QuizAttempt, QuizLearnerState, QuizQuestionType, QuizSubmission } from "./types";
 import { quizSubmissionSchema } from "./validation";
 
 type QuizDefinition = {
@@ -227,6 +227,60 @@ export class QuizService {
       return {
         ok: true,
         value: await this.repository.listAttempts(client, access.value.context.accountId, courseId, quizItemId, false),
+      };
+    });
+  }
+
+  async learnerState(sessionToken: string, courseId: string, quizItemId: string): Promise<ServiceResult<QuizLearnerState>> {
+    return withTransaction(this.pool, async (client) => {
+      const access = await this.learning.lockItemForCommand(client, sessionToken, courseId, quizItemId);
+      if (!access.ok) return access;
+      if (access.value.item.type !== "quiz") return failure("validation", "This item is not a quiz.");
+      const attempts = await this.repository.listAttempts(
+        client,
+        access.value.context.accountId,
+        courseId,
+        quizItemId,
+        false,
+      );
+      const cycle = await client.query<{
+        next_eligible_at: Date;
+        attempt_limit: number | null;
+        attempt_count: number;
+        passed: boolean;
+        open_attempt_id: string | null;
+      }>(
+        `SELECT c.next_eligible_at, d.attempt_limit,
+                count(a.id)::integer AS attempt_count,
+                COALESCE(bool_or(a.passed), false) AS passed,
+                max(a.id::text) FILTER (WHERE a.submitted_at IS NULL) AS open_attempt_id
+         FROM quiz_cycles c
+         JOIN quiz_definitions d ON d.revision_id = c.revision_id AND d.item_id = c.quiz_item_id
+         LEFT JOIN quiz_attempts a ON a.cycle_id = c.id
+         WHERE c.generation_id = $1 AND c.quiz_item_id = $2 AND c.is_active
+         GROUP BY c.id, c.next_eligible_at, d.attempt_limit`,
+        [access.value.generation.id, quizItemId],
+      );
+      const active = cycle.rows[0];
+      if (!active) {
+        return { ok: true, value: { attempts, activeAttempt: null, canStart: true, passed: false, exhausted: false, waitKind: null, nextEligibleAt: null } };
+      }
+      const activeAttempt = active.open_attempt_id
+        ? attempts.find((attempt) => attempt.id === active.open_attempt_id) ?? null
+        : null;
+      const timed = active.attempt_count === 0 && active.next_eligible_at.getTime() > Date.now();
+      const exhausted = !active.passed && active.attempt_limit !== null && active.attempt_count >= active.attempt_limit;
+      return {
+        ok: true,
+        value: {
+          attempts,
+          activeAttempt,
+          canStart: !activeAttempt && !active.passed && !exhausted && !timed,
+          passed: active.passed,
+          exhausted,
+          waitKind: timed ? "timed" : exhausted ? "administrator" : null,
+          nextEligibleAt: timed ? active.next_eligible_at : null,
+        },
       };
     });
   }

@@ -80,4 +80,33 @@ export type ItemTarget = {
 };
 
 export type ResumeTarget = LessonOverviewTarget | ItemTarget;
+
+export type TutorialContent = {
+  kind: "tutorial";
+  body: string;
+};
+
+export type MeditationContent = {
+  kind: "meditation";
+  format: "text" | "audio" | "video";
+  body: string | null;
+  mediaUri: string | null;
+  transcript: string | null;
+  captionsUri: string | null;
+  directFallbackUri: string | null;
+  attribution: string;
+};
+
+export type QuizContent = {
+  kind: "quiz";
+};
+
+export type LearnerItemView = {
+  course: LearnerCourse;
+  lesson: LearnerLesson;
+  item: LearnerItem;
+  endReached: boolean;
+  content: TutorialContent | MeditationContent | QuizContent;
+};
+
 export type LearningResult<T> = ServiceResult<T>;

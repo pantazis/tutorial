@@ -225,6 +225,10 @@ describe("immutable server-graded quiz attempts", () => {
     ]);
     expect(firstStart.value.questions.every((question) => question.options.length >= 2)).toBe(true);
     expect(firstStart.value.correctOptionIds).toBeNull();
+    await expect(quiz.learnerState(learner.sessionToken, published.courseId, quizItemId)).resolves.toMatchObject({
+      ok: true,
+      value: { activeAttempt: { id: firstStart.value.id }, canStart: false, passed: false, exhausted: false, waitKind: null },
+    });
 
     const reopened = await quiz.startAttempt(learner.sessionToken, published.courseId, quizItemId);
     expect(reopened.ok && reopened.value.id).toBe(firstStart.value.id);
@@ -262,6 +266,10 @@ describe("immutable server-graded quiz attempts", () => {
     await expect(differentlyRandomizedQuiz.startAttempt(learner.sessionToken, published.courseId, quizItemId)).resolves.toMatchObject({
       ok: false,
       code: "conflict",
+    });
+    await expect(quiz.learnerState(learner.sessionToken, published.courseId, quizItemId)).resolves.toMatchObject({
+      ok: true,
+      value: { activeAttempt: null, canStart: false, passed: true, exhausted: false, waitKind: null },
     });
 
     const history = await quiz.learnerHistory(learner.sessionToken, published.courseId, quizItemId);
@@ -363,6 +371,10 @@ describe("immutable server-graded quiz attempts", () => {
     );
     expect(secondResult).toMatchObject({ ok: true, value: { passed: false, exhausted: true } });
     expect(secondResult.ok && secondResult.value.correctOptionIds).not.toBeNull();
+    await expect(quiz.learnerState(learner.sessionToken, published.courseId, quizItemId)).resolves.toMatchObject({
+      ok: true,
+      value: { canStart: false, passed: false, exhausted: true, waitKind: "administrator", nextEligibleAt: null },
+    });
     await expect(quiz.startAttempt(learner.sessionToken, published.courseId, quizItemId)).resolves.toMatchObject({
       ok: false,
       code: "conflict",
@@ -379,6 +391,9 @@ describe("immutable server-graded quiz attempts", () => {
       60,
     );
     expect(delayed).toMatchObject({ ok: true, value: { afterReference: { cycleNumber: 2 } } });
+    const delayedState = await quiz.learnerState(learner.sessionToken, published.courseId, quizItemId);
+    expect(delayedState).toMatchObject({ ok: true, value: { canStart: false, exhausted: false, waitKind: "timed" } });
+    expect(delayedState.ok && delayedState.value.nextEligibleAt).toBeInstanceOf(Date);
     await expect(quiz.startAttempt(learner.sessionToken, published.courseId, quizItemId)).resolves.toMatchObject({
       ok: false,
       code: "conflict",
@@ -391,6 +406,10 @@ describe("immutable server-graded quiz attempts", () => {
       "Authorized replacement of the delayed cycle.",
     );
     expect(immediate).toMatchObject({ ok: true, value: { afterReference: { cycleNumber: 3 } } });
+    await expect(quiz.learnerState(learner.sessionToken, published.courseId, quizItemId)).resolves.toMatchObject({
+      ok: true,
+      value: { canStart: true, passed: false, exhausted: false, waitKind: null, nextEligibleAt: null },
+    });
     const thirdCycleAttempt = await quiz.startAttempt(learner.sessionToken, published.courseId, quizItemId);
     expect(thirdCycleAttempt).toMatchObject({ ok: true, value: { cycleNumber: 3, attemptNumber: 1 } });
 
@@ -429,6 +448,10 @@ describe("immutable server-graded quiz attempts", () => {
       );
       expect(result).toMatchObject({ ok: true, value: { passed: false, exhausted: false, correctOptionIds: null } });
     }
+    await expect(quiz.learnerState(learner.sessionToken, published.courseId, quizItemId)).resolves.toMatchObject({
+      ok: true,
+      value: { canStart: true, passed: false, exhausted: false, waitKind: null },
+    });
     await expect(quiz.startAttempt(learner.sessionToken, published.courseId, quizItemId)).resolves.toMatchObject({
       ok: true,
       value: { attemptNumber: 4 },

@@ -154,7 +154,7 @@ Complete one task at a time. A task is complete only after all `VERIFY` evidence
 
 **Verification evidence — September 29, 2026:** Delivered localized EL/EN My Course, course overview, and lesson overview flows over the authenticated learning adapter. Catalog sections follow server status/admin ordering and include explicit empty/error states, revision-bound uploaded or branded fallback covers, server percentages, and explicit Start/Continue/Resume/Open/Review actions. Course outlines preserve mixed grouped/ungrouped lesson ordering; locked lessons remain visible with localized prerequisite guidance and no action. Opening does not start progress, Start Course and Start Lesson use POST routes, resume preserves the server-selected target without bypassing Start Lesson, and the course shell suppresses language switching. Docker Compose verification passed: TypeScript; ESLint with zero warnings; the complete Vitest suite (10 files, 70 tests); the complete Playwright suite (5 tests, one worker) including 390px/desktop navigation, empty state, ordering, fallback cover, explicit starts, locked semantics, labels, focus, and overflow; and the multi-stage production build. `git diff --check` passed.
 
-### [ ] T-011 — Deliver tutorial, meditation, quiz, result, and attempt-history UI
+### [x] T-011 — Deliver tutorial, meditation, quiz, result, and attempt-history UI
 
 - **GOAL:** Provide accessible item completion and quiz flows over authoritative services.
 - **DEPENDENCIES:** `T-010`.
@@ -166,6 +166,8 @@ Complete one task at a time. A task is complete only after all `VERIFY` evidence
 - **VERIFY:** Browser/service tests cover top/start reopening, tutorial end plus explicit action, media/text automatic end pending/result, accessible fallback, all quiz types, unanswered announcement, stable active order, reveal policy, finite/unlimited and timed/admin exhaustion, pass lockout, history/empty state, item navigation, 390px/desktop, reduced motion and keyboard/screen-reader semantics.
 - **DONE_WHEN:** Every item type completes only through its factual server rule and all quiz states remain accessible and reproducible.
 - **NEXT:** `T-012`.
+
+**Verification evidence — October 5, 2026:** Delivered localized tutorial, text/audio/video meditation, quiz, immutable result, and attempt-history routes over server-authoritative learning and quiz services. Tutorial completion remains hidden until the persisted end signal and then requires an explicit command; meditation completion submits validated factual text/media end intent and exposes transcript, captions, direct fallback, and attribution without making learning-quality claims. Quiz UI preserves the persisted active-attempt order, uses native fieldsets and linked unanswered summaries, supports all allowed question types, applies server reveal/remaining/timed/admin-reset/pass-lockout state, and retains cycle/attempt history. Docker Compose verification passed: focused Playwright learning-item journey (1 test in 41.2s); complete Playwright suite (6 tests); TypeScript; ESLint with zero warnings; complete Vitest suite (11 files, 74 tests); multi-stage production build; and `git diff --check`.
 
 ### [ ] T-012 — Deliver learner utilities, preference change, notifications, export, and deletion boundary
 

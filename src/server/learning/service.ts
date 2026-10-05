@@ -9,7 +9,7 @@ import type { AuthenticatedContext, ServiceResult } from "@/server/auth/types";
 import { withTransaction } from "@/server/db/transaction";
 
 import { LearningRepository } from "./repository";
-import type { LearnerCatalogEntry, LearnerCourse, LearnerItem, ResumeTarget } from "./types";
+import type { LearnerCatalogEntry, LearnerCourse, LearnerItem, LearnerItemView, ResumeTarget } from "./types";
 
 export type LearningGeneration = { id: string; revision_id: string };
 type StartedCourseAccess = { context: AuthenticatedContext; generation: Generation };
@@ -42,6 +42,71 @@ export class LearningService {
       if (!context) return failure("unauthenticated", "Authentication is required.");
       const course = await this.repository.loadCourse(client, context, courseId);
       return course ? { ok: true, value: course } : failure("denied", "Course is unavailable.");
+    });
+  }
+
+  async openItem(sessionToken: string, courseId: string, itemId: string): Promise<ServiceResult<LearnerItemView>> {
+    return withTransaction(this.pool, async (client) => {
+      const context = await loadAuthenticated(client, sessionToken);
+      if (!context) return failure("unauthenticated", "Authentication is required.");
+      const course = await this.repository.loadCourse(client, context, courseId);
+      if (!course?.startedAt) return failure("denied", "Item is unavailable.");
+      const lesson = course.lessons.find((candidate) => candidate.items.some((item) => item.id === itemId));
+      const item = lesson?.items.find((candidate) => candidate.id === itemId);
+      if (!lesson || !item || lesson.status === "locked" || !lesson.startedAt) {
+        return failure("denied", "Item is unavailable.");
+      }
+      const progress = await client.query<{ end_eligible_at: Date | null }>(
+        `SELECT ip.end_eligible_at
+         FROM learner_course_generations g
+         LEFT JOIN learner_item_progress ip ON ip.generation_id = g.id AND ip.item_id = $3
+         WHERE g.account_id = $1 AND g.course_id = $2 AND g.is_active`,
+        [context.accountId, courseId, itemId],
+      );
+      const endReached = Boolean(progress.rows[0]?.end_eligible_at);
+      if (item.type === "quiz") return { ok: true, value: { course, lesson, item, endReached, content: { kind: "quiz" } } };
+      if (item.type === "guided_meditation") {
+        const result = await client.query<{
+          format: "text" | "audio" | "video";
+          body: string | null;
+          media_uri: string | null;
+          transcript: string | null;
+          captions_uri: string | null;
+          direct_fallback_uri: string | null;
+          attribution: string;
+        }>(
+          `SELECT format, body, media_uri, transcript, captions_uri, direct_fallback_uri, attribution
+           FROM meditation_contents WHERE revision_id = $1 AND item_id = $2`,
+          [course.revisionId, itemId],
+        );
+        const content = result.rows[0];
+        if (!content) return failure("conflict", "Meditation content is unavailable.");
+        return {
+          ok: true,
+          value: {
+            course,
+            lesson,
+            item,
+            endReached,
+            content: {
+              kind: "meditation",
+              format: content.format,
+              body: content.body,
+              mediaUri: content.media_uri,
+              transcript: content.transcript,
+              captionsUri: content.captions_uri,
+              directFallbackUri: content.direct_fallback_uri,
+              attribution: content.attribution,
+            },
+          },
+        };
+      }
+      const result = await client.query<{ body: string }>(
+        "SELECT body FROM topic_contents WHERE revision_id = $1 AND item_id = $2",
+        [course.revisionId, itemId],
+      );
+      if (!result.rows[0]) return failure("conflict", "Tutorial content is unavailable.");
+      return { ok: true, value: { course, lesson, item, endReached, content: { kind: "tutorial", body: result.rows[0].body } } };
     });
   }
 

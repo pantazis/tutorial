@@ -37,4 +37,15 @@ export type QuizAttempt = {
 };
 
 export type QuizSubmission = Array<{ questionId: string; optionIds: string[] }>;
+
+export type QuizLearnerState = {
+  attempts: QuizAttempt[];
+  activeAttempt: QuizAttempt | null;
+  canStart: boolean;
+  passed: boolean;
+  exhausted: boolean;
+  waitKind: "timed" | "administrator" | null;
+  nextEligibleAt: Date | null;
+};
+
 export type QuizResult<T> = ServiceResult<T>;

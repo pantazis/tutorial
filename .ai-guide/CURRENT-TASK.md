@@ -2,15 +2,15 @@
 
 STATUS: READY
 
-### [ ] T-011 — Deliver tutorial, meditation, quiz, result, and attempt-history UI
+### [ ] T-012 — Deliver learner utilities, preference change, notifications, export, and deletion boundary
 
-- **GOAL:** Provide accessible item completion and quiz flows over authoritative services.
-- **DEPENDENCIES:** `T-010` complete on September 29, 2026.
-- **READ:** `REQUIREMENTS.md` — `FR-009..010`, `FR-018`, `NFR-004..006`, `NFR-010`; `FRONTEND.md` — learning-item and quiz `PG-*`, composition, accessibility/media rules.
-- **REUSE:** Course shell, content blocks, media frame, completion result, item navigation, quiz form/question fieldsets, attempt history, host media/CSP primitives.
-- **TOUCH:** Confirmed learning-item/quiz route files, adapters, media integration, localized copy, tests.
-- **DO_NOT:** Do not persist exact position, expose Complete Tutorial early, claim end signals prove learning, reorder an active attempt, add free text, or reveal answers beyond server policy.
-- **STEPS:** Render purpose-built tutorial blocks/end gate; send validated meditation end intent for text/audio/video; present transcript/captions/direct fallback; render snapshotted questions/options and accessible validation; show score/pass/fail/reveal/remaining/wait/reset states and immutable cycle history.
-- **VERIFY:** Browser/service tests cover top/start reopening, tutorial end plus explicit action, media/text automatic end pending/result, accessible fallback, all quiz types, unanswered announcement, stable active order, reveal policy, finite/unlimited and timed/admin exhaustion, pass lockout, history/empty state, item navigation, 390px/desktop, reduced motion and keyboard/screen-reader semantics.
-- **DONE_WHEN:** Every item type completes only through its factual server rule and all quiz states remain accessible and reproducible.
-- **NEXT:** `T-012`.
+- **GOAL:** Complete self-service factual learner views without exceeding approved privacy policy.
+- **DEPENDENCIES:** `T-011` complete on October 5, 2026.
+- **READ:** `REQUIREMENTS.md` — `FR-004`, `FR-014..015`, `NFR-003..006`; `ARCHITECTURE.md` — Notifications/reporting/preview/data rights; `DECISIONS.md` — GATE-PRIVACY-001; `FRONTEND.md` — learner utility `PG-*`.
+- **REUSE:** Learner shell, factual history, notification/empty/result/confirmation primitives, export and preference services.
+- **TOUCH:** Confirmed profile/progress/notifications/help/history routes, adapters, export response, policy-safe deletion state, tests.
+- **DO_NOT:** Do not add unread state, mutate old notifications/progress on language change, expose another learner, or implement destructive field treatment without approved retention/deletion authority.
+- **STEPS:** Render/update profile and preferred language outside courses; route to matching My Course after change; render factual progress/history, notification chronology/empty state, localized help, export, logout, and an explicit unavailable/approved-policy deletion flow as authority permits.
+- **VERIFY:** Tests prove self-only access, immediate interface/catalog language change with prior progress/history unchanged, no in-course switch, notification chronology/no unread controls, export completeness, empty states, deletion fail-closed or approved behavior, local date rendering, keyboard/focus, 390px/desktop.
+- **DONE_WHEN:** Learner utilities satisfy self-service requirements and all destructive privacy behavior is either verified against approved policy or explicitly blocked.
+- **NEXT:** `T-013`.
