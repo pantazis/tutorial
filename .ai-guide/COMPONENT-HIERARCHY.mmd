@@ -56,6 +56,7 @@ flowchart TD
     GV[GovernanceTimeline / PublicationBlockers / ImpactPreview / ConfirmDialog]
     AC[AdminCourseList / CourseEditor / LessonEditor]
     AG[GovernanceView / ConfirmLifecycle / AdminPreview]
+    AO[LearnerResults / LearnerDetailView / ActivityReport / ImpactPreview / MembershipView]
 
     SHARED --> PH
     SHARED --> RN
@@ -69,6 +70,7 @@ flowchart TD
     SHARED --> GV
     SHARED --> AC
     SHARED --> AG
+    SHARED --> AO
 
     PGA --> FE
     PGA --> RN
@@ -120,12 +122,17 @@ flowchart TD
     PGAP --> AG
     PGALS --> AV
     PGALS --> RN
+    PGALS --> AO
     PGALR --> AV
     PGALR --> QV
+    PGALR --> AO
     PGRS --> GV
+    PGRS --> AO
     PGREP --> AV
     PGREP --> RN
+    PGREP --> AO
     PGAM --> AV
     PGAM --> GV
+    PGAM --> AO
     STD --> RN
     STU --> RN

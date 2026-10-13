@@ -11,7 +11,7 @@ import { withTransaction } from "@/server/db/transaction";
 import { LearningService } from "@/server/learning/service";
 
 import { QuizRepository } from "./repository";
-import type { QuizAttempt, QuizLearnerState, QuizQuestionType, QuizSubmission } from "./types";
+import type { AdministratorQuizHistory, QuizAttempt, QuizLearnerState, QuizQuestionType, QuizSubmission } from "./types";
 import { quizSubmissionSchema } from "./validation";
 
 type QuizDefinition = {
@@ -302,6 +302,43 @@ export class QuizService {
         [randomUUID(), actor.accountId, learnerAccountId, JSON.stringify({ courseId, quizItemId, attemptCount: attempts.length })],
       );
       return { ok: true, value: attempts };
+    });
+  }
+
+  async administratorLearnerHistory(
+    sessionToken: string,
+    learnerAccountId: string,
+  ): Promise<ServiceResult<AdministratorQuizHistory[]>> {
+    return withTransaction(this.pool, async (client) => {
+      const actor = await loadAuthenticated(client, sessionToken, true);
+      if (!actor || !canAccessAdministration(actor)) return failure("denied", "Operation is not permitted.");
+      const items = await client.query<{ course_id: string; course_title: string; quiz_item_id: string; quiz_title: string }>(
+        `SELECT DISTINCT g.course_id, r.title AS course_title, a.quiz_item_id, i.title AS quiz_title
+         FROM learner_course_generations g
+         JOIN course_revisions r ON r.id = g.revision_id
+         JOIN quiz_attempts a ON a.generation_id = g.id
+         JOIN lesson_items i ON i.id = a.quiz_item_id
+         WHERE g.account_id = $1
+         ORDER BY r.title, i.title, g.course_id, a.quiz_item_id`,
+        [learnerAccountId],
+      );
+      const history: AdministratorQuizHistory[] = [];
+      for (const item of items.rows) {
+        history.push({
+          courseId: item.course_id,
+          courseTitle: item.course_title,
+          quizItemId: item.quiz_item_id,
+          quizTitle: item.quiz_title,
+          attempts: await this.repository.listAttempts(client, learnerAccountId, item.course_id, item.quiz_item_id, true),
+        });
+      }
+      await client.query(
+        `INSERT INTO administrator_access_audit
+           (id, actor_account_id, subject_account_id, access_type, detail)
+         VALUES ($1, $2, $3, 'quiz_answers', $4::jsonb)`,
+        [randomUUID(), actor.accountId, learnerAccountId, JSON.stringify({ quizCount: history.length, attemptCount: history.reduce((count, item) => count + item.attempts.length, 0) })],
+      );
+      return { ok: true, value: history };
     });
   }
 

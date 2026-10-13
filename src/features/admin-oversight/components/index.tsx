@@ -1,0 +1,41 @@
+import Link from "next/link";
+
+import { EmptyState, ProgressSummary, StatusBadge, Timestamp } from "@/components/ui";
+import type { AdministratorMembership } from "@/server/auth/types";
+import type { ActivityReportRow, LearnerDetail, LearnerSummary } from "@/server/oversight/types";
+import type { AdministratorQuizHistory, QuizAttempt } from "@/server/quiz/types";
+import type { ResetPreview } from "@/server/reset/types";
+
+import styles from "./AdminOversight.module.scss";
+import { ConfirmAdminAction } from "./ConfirmAdminAction";
+
+export { ConfirmAdminAction };
+export { ConfirmReset } from "./ConfirmReset";
+export { styles as adminOversightStyles };
+
+export function LearnerResults({ learners }: { learners: LearnerSummary[] }) {
+  if (!learners.length) return <EmptyState title="No learners found"><p>No learner records match the permitted filters. Try a broader email, language, or account status.</p></EmptyState>;
+  return <div aria-label="Learner search results" className={styles.tableScroller} role="region" tabIndex={0}><table className={styles.table}><thead><tr><th>Email</th><th>Language</th><th>Status</th><th>Active courses</th><th>Completed courses</th><th>Action</th></tr></thead><tbody>{learners.map((learner) => <tr key={learner.accountId}><td>{learner.email}</td><td>{learner.preferredLanguage}</td><td><StatusBadge label={learner.status} tone={learner.status === "active" ? "success" : "warning"} /></td><td>{learner.activeCourseCount}</td><td>{learner.completedCourseCount}</td><td><Link href={`/admin/learners/${learner.accountId}`}>View factual record</Link></td></tr>)}</tbody></table></div>;
+}
+
+export function LearnerDetailView({ detail, history }: { detail: LearnerDetail; history: AdministratorQuizHistory[] }) {
+  return <div className={styles.sections}><section className={styles.panel}><h2>Account facts</h2><dl><dt>Email</dt><dd>{detail.email}</dd><dt>Preferred language</dt><dd>{detail.preferredLanguage}</dd><dt>Status</dt><dd>{detail.status}</dd><dt>Created</dt><dd><Timestamp date={detail.createdAt} locale="en" /></dd></dl></section><section><h2>Current course progress</h2>{detail.courses.length ? <ul className={styles.list} data-columns="two">{detail.courses.map((course) => <li className={styles.card} key={course.courseId} lang={course.language.toLowerCase()}><h3>{course.title}</h3><ProgressSummary label="Course progress" percentage={course.percentage} /><p>Started <Timestamp date={course.startedAt} locale="en" />{course.completedAt ? <>; completed <Timestamp date={course.completedAt} locale="en" /></> : null}</p><Link className={styles.action} href={`/admin/learners/${detail.accountId}/reset?courseId=${course.courseId}`}>Review reset impact</Link></li>)}</ul> : <EmptyState title="No active course progress"><p>This learner has no current course generation.</p></EmptyState>}</section><section><h2>Authorized quiz answer history</h2>{history.length ? history.map((item) => <article className={styles.panel} key={`${item.courseId}-${item.quizItemId}`}><h3>{item.courseTitle}: {item.quizTitle}</h3><AttemptList attempts={item.attempts} /></article>) : <EmptyState title="No quiz attempts"><p>No immutable quiz attempts are available for this learner.</p></EmptyState>}</section></div>;
+}
+
+function AttemptList({ attempts }: { attempts: QuizAttempt[] }) {
+  return <ol className={styles.attempts}>{attempts.map((attempt) => <li className={styles.attempt} key={attempt.id}><div className={styles.meta}><strong>Cycle {attempt.cycleNumber}, attempt {attempt.attemptNumber}</strong><StatusBadge label={attempt.submittedAt ? attempt.passed ? "Passed" : "Not passed" : "Open"} tone={attempt.passed ? "success" : attempt.submittedAt ? "warning" : "information"} />{attempt.scorePercentage === null ? null : <span>{attempt.scorePercentage}%</span>}</div><Timestamp date={attempt.submittedAt ?? attempt.startedAt} locale="en" />{attempt.questions.map((question) => <section key={question.id}><h4>{question.prompt}</h4><ul className={styles.answerList}>{question.options.map((option) => { const selected = attempt.selectedOptionIds?.[question.id]?.includes(option.id) ?? false; const correct = attempt.correctOptionIds?.[question.id]?.includes(option.id) ?? false; return <li key={option.id}>{option.label} — {selected ? "selected" : "not selected"}{correct ? "; correct option" : ""}</li>; })}</ul></section>)}</li>)}</ol>;
+}
+
+export function ActivityReport({ rows }: { rows: ActivityReportRow[] }) {
+  if (!rows.length) return <EmptyState title="No course activity"><p>No published course activity matches the selected factual filters.</p></EmptyState>;
+  return <div aria-label="Course activity report" className={styles.tableScroller} role="region" tabIndex={0}><table className={styles.table}><thead><tr><th>Course</th><th>Language</th><th>Active learners</th><th>Completed learners</th><th>Quiz attempts</th></tr></thead><tbody>{rows.map((row) => <tr key={row.courseId}><td lang={row.language.toLowerCase()}>{row.title}</td><td>{row.language}</td><td>{row.activeLearners}</td><td>{row.completedLearners}</td><td>{row.attemptCount}</td></tr>)}</tbody></table></div>;
+}
+
+export function ImpactPreview({ preview }: { preview: ResetPreview }) {
+  const impact = preview.impact;
+  return <section className={styles.panel}><h2>Server-calculated impact</h2><p><strong>Scope:</strong> {impact.scope}</p><p><strong>Current course percentage:</strong> {impact.coursePercentage}%</p><ul><li>{impact.affectedLessonIds.length} lesson record(s) affected, including dependents.</li><li>{impact.affectedItemIds.length} item record(s) affected.</li><li>{impact.quizAttemptIds.length} historical quiz attempt(s) preserved.</li><li>{impact.completedLessonIds.length} currently completed lesson(s) included in the calculation.</li><li>{impact.waitSeconds} seconds of administrator-defined quiz wait.</li></ul><p>Preview expires <Timestamp date={preview.expiresAt} locale="en" />. Confirmation will recompute this impact and reject any mismatch.</p></section>;
+}
+
+export function MembershipView({ membership }: { membership: AdministratorMembership }) {
+  return <div className={styles.sections}><section><h2>Accounts eligible for admin role changes</h2>{membership.accounts.length ? <div aria-label="Administrator membership accounts" className={styles.tableScroller} role="region" tabIndex={0}><table className={styles.table}><thead><tr><th>Email</th><th>Current role</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody>{membership.accounts.map((account) => <tr key={account.accountId}><td>{account.email}</td><td>{account.role}</td><td>{account.status}</td><td><Timestamp date={account.createdAt} locale="en" /></td><td>{account.role === "admin" ? <ConfirmAdminAction action={`/admin/administrators/${account.accountId}/role`} label={`Revoke admin from ${account.email}`} title="Revoke administrator access?"><input name="action" type="hidden" value="revoke" /></ConfirmAdminAction> : <ConfirmAdminAction action={`/admin/administrators/${account.accountId}/role`} label={`Grant admin to ${account.email}`} title="Grant administrator access?"><input name="action" type="hidden" value="grant" /></ConfirmAdminAction>}</td></tr>)}</tbody></table></div> : <EmptyState title="No eligible accounts"><p>No user or administrator accounts are available.</p></EmptyState>}</section><section><h2>Invitation history</h2>{membership.invitations.length ? <div aria-label="Administrator invitation history" className={styles.tableScroller} role="region" tabIndex={0}><table className={styles.table}><thead><tr><th>Email</th><th>State</th><th>Created</th><th>Expires</th></tr></thead><tbody>{membership.invitations.map((invitation) => <tr key={invitation.invitationId}><td>{invitation.email}</td><td><StatusBadge label={invitation.state} tone={invitation.state === "accepted" ? "success" : invitation.state === "expired" ? "warning" : "information"} /></td><td><Timestamp date={invitation.createdAt} locale="en" /></td><td><Timestamp date={invitation.expiresAt} locale="en" /></td></tr>)}</tbody></table></div> : <EmptyState title="No administrator invitations"><p>No invitation has been issued.</p></EmptyState>}</section></div>;
+}

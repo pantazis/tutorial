@@ -27,7 +27,7 @@ export default async function AdminBoundaryPage() {
       <ResultNotice detail="Course governance is server-authoritative. Save never publishes, and preview never writes learner state." heading="Administrative account confirmed" nextAction="Choose Courses to edit governed content." tone="information" />
       <div className={adminCourseStyles.sections} data-columns="two">
         <section className={adminCourseStyles.panel}><h2>Course governance</h2><p>{values.length} total courses; {drafts} current drafts; {published} published.</p><Link className={adminCourseStyles.action} href="/admin/courses">Manage courses</Link></section>
-        <section className={adminCourseStyles.panel}><h2>Learner administration</h2><p>Learner, report, reset, and administrator membership pages are owned by the next implementation task.</p></section>
+        <section className={adminCourseStyles.panel}><h2>Learner administration</h2><p>Search factual learner records, review authorized progress and answer history, and create server-confirmed reset previews.</p><div className={adminCourseStyles.actions}><Link className={adminCourseStyles.action} href="/admin/learners">Manage learners</Link><Link className={`${adminCourseStyles.action} ${adminCourseStyles.secondary}`} href="/admin/reports">Progress & Activity</Link>{context.value.role === "master_admin" ? <Link className={`${adminCourseStyles.action} ${adminCourseStyles.secondary}`} href="/admin/administrators">Administrator Management</Link> : null}</div></section>
       </div>
     </AdminShell>
   );

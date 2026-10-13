@@ -19,6 +19,11 @@ export type LearnerDetail = LearnerSummary & {
     percentage: number;
     startedAt: Date;
     completedAt: Date | null;
+    lessons: Array<{
+      lessonId: string;
+      title: string;
+      quizItems: Array<{ itemId: string; title: string }>;
+    }>;
   }>;
 };
 

@@ -48,4 +48,12 @@ export type QuizLearnerState = {
   nextEligibleAt: Date | null;
 };
 
+export type AdministratorQuizHistory = {
+  courseId: string;
+  courseTitle: string;
+  quizItemId: string;
+  quizTitle: string;
+  attempts: QuizAttempt[];
+};
+
 export type QuizResult<T> = ServiceResult<T>;

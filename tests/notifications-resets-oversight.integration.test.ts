@@ -317,6 +317,15 @@ describe("notifications, audited resets, oversight, and privacy boundaries", () 
       .resolves.toMatchObject({ ok: false, code: "validation" });
     const adminAnswers = await quiz.administratorHistory(admin.sessionToken, learner.accountId, published.courseId, quizItemId);
     expect(adminAnswers.ok && adminAnswers.value[0].correctOptionIds).not.toBeNull();
+    const completeAdminHistory = await quiz.administratorLearnerHistory(admin.sessionToken, learner.accountId);
+    expect(completeAdminHistory).toMatchObject({
+      ok: true,
+      value: [{
+        courseId: published.courseId,
+        quizItemId,
+        attempts: [{ id: attempt.value.id, correctOptionIds: expect.any(Object) }],
+      }],
+    });
 
     const ownExport = await oversight.exportOwnData(learner.sessionToken);
     expect(ownExport).toMatchObject({

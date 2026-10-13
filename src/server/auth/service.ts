@@ -9,7 +9,7 @@ import type { MailTransport } from "@/server/mail/transport";
 
 import { createOpaqueToken, hashOpaqueToken, hashPassword, verifyPassword } from "./crypto";
 import { emailSchema, loginSchema, passwordSchema, preferredLanguageSchema, registrationSchema } from "./validation";
-import type { AuthenticatedContext, Language, Role, ServiceResult } from "./types";
+import type { AdministratorMembership, AuthenticatedContext, Language, Role, ServiceResult } from "./types";
 
 const SESSION_LIFETIME_MS = 1000 * 60 * 60 * 24 * 30;
 const ONE_TIME_TOKEN_LIFETIME_MS = 1000 * 60 * 60;
@@ -313,6 +313,13 @@ export class IdentityService {
     return withTransaction(this.pool, async (client) => {
       const actor = await loadAuthenticated(client, sessionToken, true);
       if (!actor || actor.role !== "master_admin") return failure("denied", "Operation is not permitted.");
+      const eligible = await client.query<{ id: string }>(
+        `SELECT id FROM accounts
+         WHERE email = $1 AND role = 'user' AND status = 'active' AND verified_at IS NOT NULL
+         FOR UPDATE`,
+        [email.data],
+      );
+      if (!eligible.rows[0]) return failure("conflict", "An eligible verified account is required.");
       try {
         await client.query(
           `INSERT INTO admin_invitations (id, email, token_hash, invited_by, expires_at)
@@ -324,7 +331,51 @@ export class IdentityService {
         throw error;
       }
       await audit(client, "admin_invited", actor.accountId, null, { email: email.data });
+      await this.mail?.send({
+        to: email.data,
+        subject: "Administrator invitation",
+        text: `Administrator invitation token: ${invitationToken}`,
+      });
       return { ok: true, value: { invitationToken } };
+    });
+  }
+
+  async listAdministratorMembership(sessionToken: string): Promise<ServiceResult<AdministratorMembership>> {
+    return withTransaction(this.pool, async (client) => {
+      const actor = await loadAuthenticated(client, sessionToken);
+      if (!actor || actor.role !== "master_admin") return failure("denied", "Operation is not permitted.");
+      const accounts = await client.query<{
+        id: string; email: string; role: Role; status: "active" | "disabled"; created_at: Date;
+      }>(
+        `SELECT id, email, role, status, created_at
+         FROM accounts WHERE role IN ('user', 'admin') ORDER BY role DESC, email, id`,
+      );
+      const invitations = await client.query<{
+        id: string; email: string; expires_at: Date; state: "pending" | "expired" | "accepted"; created_at: Date;
+      }>(
+        `SELECT id, email, expires_at,
+                CASE WHEN consumed_at IS NOT NULL THEN 'accepted'
+                     WHEN expires_at <= statement_timestamp() THEN 'expired'
+                     ELSE 'pending' END AS state,
+                created_at
+         FROM admin_invitations ORDER BY created_at DESC, id DESC LIMIT 100`,
+      );
+      return { ok: true, value: {
+        accounts: accounts.rows.map((row) => ({
+          accountId: row.id,
+          email: row.email,
+          role: row.role,
+          status: row.status,
+          createdAt: row.created_at,
+        })),
+        invitations: invitations.rows.map((row) => ({
+          invitationId: row.id,
+          email: row.email,
+          state: row.state,
+          expiresAt: row.expires_at,
+          createdAt: row.created_at,
+        })),
+      } };
     });
   }
 

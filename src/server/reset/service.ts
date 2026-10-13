@@ -140,6 +140,22 @@ export class ResetService {
     });
   }
 
+  async loadPreview(sessionToken: string, previewId: string): Promise<ServiceResult<ResetPreview>> {
+    if (typeof previewId !== "string" || previewId.length === 0) return failure("validation", "Reset preview is invalid.");
+    return withTransaction(this.pool, async (client) => {
+      const actor = await this.requireAdministrator(client, sessionToken);
+      if (!actor) return failure("denied", "Operation is not permitted.");
+      const result = await client.query<{ fingerprint: string; impact: ResetImpact; expires_at: Date }>(
+        `SELECT fingerprint, impact, expires_at FROM reset_previews
+         WHERE id = $1 AND actor_account_id = $2`,
+        [previewId, actor.accountId],
+      );
+      const preview = result.rows[0];
+      if (!preview || preview.expires_at.getTime() <= Date.now()) return failure("conflict", "Reset preview is missing, expired, or stale.");
+      return { ok: true, value: { previewId, fingerprint: preview.fingerprint, impact: preview.impact, expiresAt: preview.expires_at } };
+    });
+  }
+
   private async requireAdministrator(client: PoolClient, sessionToken: string): Promise<AuthenticatedContext | null> {
     const actor = await loadAuthenticated(client, sessionToken, true);
     return actor && canAccessAdministration(actor) ? actor : null;

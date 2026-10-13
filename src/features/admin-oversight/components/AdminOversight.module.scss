@@ -1,0 +1,22 @@
+.sections, .list, .form, .actions, .attempts { display: grid; gap: var(--space-4); }
+.sections { gap: var(--space-8); margin-block-start: var(--space-6); }
+.sections > section { min-inline-size: 0; }
+.list, .attempts { margin: 0; padding: 0; list-style: none; }
+.panel, .card, .attempt { min-inline-size: 0; padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-medium); background: var(--color-surface); }
+.card, .attempt { display: grid; gap: var(--space-3); }
+.form { max-inline-size: var(--container-reading); }
+.form label, .form legend { font-family: var(--font-interface); font-weight: 700; }
+.form input, .form select, .form textarea { inline-size: 100%; min-block-size: 2.75rem; padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-small); background: var(--color-surface); color: var(--color-text); font: inherit; }
+.form textarea { min-block-size: 7rem; resize: vertical; }
+.form fieldset { margin: 0; padding: var(--space-4); border: 1px solid var(--color-border); }
+.actions, .meta { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.button, .action { display: inline-flex; min-block-size: 2.75rem; inline-size: fit-content; align-items: center; justify-content: center; padding: var(--space-2) var(--space-4); border: 1px solid var(--color-action); border-radius: var(--radius-small); background: var(--color-action); color: var(--color-action-contrast); font: 700 1rem/1.2 var(--font-interface); text-decoration: none; }
+.secondary { background: var(--color-surface); color: var(--color-action); }
+.danger { border-color: var(--color-danger); background: var(--color-danger); }
+.tableScroller { overflow-x: auto; inline-size: 100%; max-inline-size: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-medium); }
+.table { inline-size: 100%; min-inline-size: 42rem; border-collapse: collapse; background: var(--color-surface); }
+.table th, .table td { padding: var(--space-3); border-block-end: 1px solid var(--color-border); text-align: start; vertical-align: top; }
+.table th { font-family: var(--font-interface); }
+.answerList { margin-block: var(--space-2) 0; }
+@media (min-width: 52rem) { .list[data-columns="two"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (forced-colors: active) { .panel, .card, .attempt, .button, .action, .tableScroller { border-color: CanvasText; } }

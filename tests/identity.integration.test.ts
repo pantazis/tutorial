@@ -214,6 +214,21 @@ describe("identity and authorization core", () => {
     await recoverMasterMembership(pool, "grant", "master@example.test");
     const learner = await createVerifiedAccount("invitee@example.test");
 
+    await expect(service.inviteAdmin(master.sessionToken, "missing@example.test")).resolves.toMatchObject({
+      ok: false,
+      code: "conflict",
+    });
+    const unverified = await service.register({
+      email: "unverified-invitee@example.test",
+      password,
+      preferredLanguage: "EN",
+    });
+    if (!unverified.ok) throw new Error(unverified.message);
+    await expect(service.inviteAdmin(master.sessionToken, "unverified-invitee@example.test")).resolves.toMatchObject({
+      ok: false,
+      code: "conflict",
+    });
+
     const invitation = await service.inviteAdmin(master.sessionToken, "invitee@example.test");
     if (!invitation.ok) throw new Error(invitation.message);
     const [first, second] = await Promise.all([

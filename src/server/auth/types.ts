@@ -12,6 +12,23 @@ export type AuthenticatedContext = {
   sessionId: string;
 };
 
+export type AdministratorMembership = {
+  accounts: Array<{
+    accountId: string;
+    email: string;
+    role: Role;
+    status: "active" | "disabled";
+    createdAt: Date;
+  }>;
+  invitations: Array<{
+    invitationId: string;
+    email: string;
+    state: "pending" | "expired" | "accepted";
+    expiresAt: Date;
+    createdAt: Date;
+  }>;
+};
+
 export type ServiceResult<T> =
   | { ok: true; value: T }
   | {

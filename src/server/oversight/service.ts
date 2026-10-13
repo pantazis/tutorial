@@ -98,6 +98,18 @@ export class OversightService {
          WHERE g.account_id = $1 AND g.is_active ORDER BY cp.started_at, g.id`,
         [learnerAccountId],
       );
+      const resetTargets = await client.query<{
+        course_id: string; lesson_id: string; lesson_title: string; item_id: string | null; item_title: string | null;
+      }>(
+        `SELECT g.course_id, l.id AS lesson_id, l.title AS lesson_title,
+                i.id AS item_id, i.title AS item_title
+         FROM learner_course_generations g
+         JOIN course_lessons l ON l.revision_id = g.revision_id
+         LEFT JOIN lesson_items i ON i.lesson_id = l.id AND i.item_type = 'quiz'
+         WHERE g.account_id = $1 AND g.is_active
+         ORDER BY g.course_id, COALESCE(l.outline_position, l.group_position), l.id, i.item_position`,
+        [learnerAccountId],
+      );
       await this.audit(client, actor.accountId, learnerAccountId, "learner_detail", { courseCount: courses.rowCount ?? 0 });
       return { ok: true, value: {
         accountId: row.id,
@@ -115,6 +127,15 @@ export class OversightService {
           percentage: course.percentage,
           startedAt: course.started_at,
           completedAt: course.completed_at,
+          lessons: resetTargets.rows.filter((target) => target.course_id === course.course_id).reduce<LearnerDetail["courses"][number]["lessons"]>((lessons, target) => {
+            let lesson = lessons.find((candidate) => candidate.lessonId === target.lesson_id);
+            if (!lesson) {
+              lesson = { lessonId: target.lesson_id, title: target.lesson_title, quizItems: [] };
+              lessons.push(lesson);
+            }
+            if (target.item_id && target.item_title) lesson.quizItems.push({ itemId: target.item_id, title: target.item_title });
+            return lessons;
+          }, []),
         })),
       } };
     });
