@@ -136,6 +136,23 @@ After `T-001` confirms or establishes the host:
 - Preserve failed output needed to explain a blocker.
 - Final release evidence must include migrations, lint, typecheck, tests, production build, backup/restore validation, teardown, security/integrity cases, accessibility, responsive behavior, and traceability required by `T-015`.
 
+## User-run application verification
+
+Whenever application testing or verification must be performed by the user:
+
+- Always provide one complete, copy-paste-ready Windows PowerShell script in a single fenced code block.
+- Use the absolute project path and include all setup required to run the checks.
+- Save standard output and errors to one clearly named, timestamped log file.
+- Structure multi-step verification with named steps that record `PASS`, `FAIL`, exit code, and error details.
+- Do not use `exit` in a user-run verification script when it could terminate the user's interactive terminal.
+- Treat expected transient Docker states such as `created`, `starting`, or `restarting` according to an explicit bounded wait policy. Do not report them as failures before the documented timeout expires.
+- When safe, continue independent verification steps after one check fails so the returned log contains complete diagnostic evidence.
+- Never describe a failed, skipped, unavailable, timed-out, or unrun check as passed.
+- End the script with a clear summary and print the absolute path of the log file that the user must return.
+- After providing the script, explicitly ask the user to run it and send the resulting log.
+- Stop and wait for the user's response containing the log. Do not diagnose unseen results, make changes dependent on those results, repeat the verification, or declare the task complete before reviewing the returned log.
+- After receiving the log, report the exact passing and failing steps, fix confirmed failures when implementation is allowed, and provide another complete logged verification script if a rerun is required.
+
 ## Completing or blocking a task
 
 When all verification succeeds:
@@ -176,3 +193,62 @@ At the end of an invocation, report:
 - verification commands and outcomes;
 - unresolved gates, blockers, assumptions, and exact recovery conditions;
 - the next task only when the current task is verified complete.
+
+When executing commands that take longer than 30 seconds (such as builds, test suites, or package installs):
+Long-running commands — more than 30 seconds
+
+When executing any command that may take longer than 30 seconds, such as builds, tests, Docker operations, migrations, installs, backup/restore, or large validation suites:
+
+    Never wait synchronously for more than 30 seconds.
+
+    Start the command as a background process.
+
+    Redirect both standard output and errors to a uniquely named log file.
+
+    Record the process ID (PID), command, start time, and log-file path.
+
+    Check whether the process is still running at reasonable intervals.
+
+    Read only the new/relevant part of the log when checking progress. Do not repeatedly load the entire log.
+
+    While the process is running, report:
+
+        RUNNING
+
+        elapsed time
+
+        latest meaningful log output
+
+    Do not start another command that depends on this command until it has finished successfully.
+
+    When the process finishes, capture its real exit code.
+
+    Read the final relevant log output and classify the command as:
+
+    PASS — process completed with exit code 0.
+
+    FAIL — process completed with a non-zero exit code.
+
+    TIMEOUT — documented maximum wait time was exceeded.
+
+    Never infer success because the log stopped changing, output looks correct, a container exists, or enough time has passed.
+
+    On FAIL, preserve the log and use its actual error output for diagnosis.
+
+    On TIMEOUT, preserve the process/log evidence and do not report the command as passed.
+
+    Delete temporary logs only when they are no longer required as verification evidence.
+
+Use this lifecycle:
+
+START → BACKGROUND → LOG → CHECK → RUNNING → CHECK → FINISHED → EXIT CODE → PASS/FAIL
+
+For failure:
+
+FAIL → READ ERROR → DIAGNOSE → FIX → RERUN
+
+For timeout:
+
+TIMEOUT → PRESERVE EVIDENCE → BLOCK OR RECOVER
+
+A long-running command is considered successfully verified only after its process has terminated and its actual exit code is 0.
