@@ -203,6 +203,147 @@ describe("revisioned course and governance core", () => {
     expect(prerequisites.rows[0].count).toBe(3);
   });
 
+  it("retains server-issued identities, rejects foreign identities, and forks published graphs with new identities", async () => {
+    const admin = await createAdministrator();
+    const first = await courses.createCourse(admin.sessionToken, validCourse("EN"));
+    const second = await courses.createCourse(admin.sessionToken, validCourse("EL"));
+    if (!first.ok || !second.ok) throw new Error("course creation failed");
+
+    const firstDetail = await courses.loadAdministration(admin.sessionToken, first.value.courseId);
+    if (!firstDetail.ok) throw new Error(firstDetail.message);
+    const firstIds = firstDetail.value.input.outline.flatMap((node) => {
+      const lessons = node.type === "lesson" ? [node] : node.lessons;
+      return [
+        ...(node.id ? [node.id] : []),
+        ...lessons.flatMap((lesson) => [
+          lesson.id!,
+          ...lesson.items.flatMap((item) => [
+            item.id!,
+            ...(item.type === "quiz" ? item.questions.flatMap((question) => [question.id!, ...question.options.map((option) => option.id!)]) : []),
+          ]),
+        ]),
+      ];
+    });
+    const retained = await courses.saveDraft(
+      admin.sessionToken,
+      first.value.courseId,
+      first.value.revisionId,
+      first.value.version,
+      firstDetail.value.input,
+    );
+    expect(retained).toMatchObject({ ok: true, value: { version: 2 } });
+    const retainedDetail = await courses.loadAdministration(admin.sessionToken, first.value.courseId);
+    if (!retainedDetail.ok) throw new Error(retainedDetail.message);
+    const retainedIds = retainedDetail.value.input.outline.flatMap((node) => {
+      const lessons = node.type === "lesson" ? [node] : node.lessons;
+      return [
+        ...(node.id ? [node.id] : []),
+        ...lessons.flatMap((lesson) => [lesson.id!, ...lesson.items.flatMap((item) => [item.id!, ...(item.type === "quiz" ? item.questions.flatMap((question) => [question.id!, ...question.options.map((option) => option.id!)]) : [])])]),
+      ];
+    });
+    expect(retainedIds).toEqual(firstIds);
+
+    const secondDetail = await courses.loadAdministration(admin.sessionToken, second.value.courseId);
+    if (!secondDetail.ok) throw new Error(secondDetail.message);
+    const secondFirstLesson = secondDetail.value.input.outline[0];
+    const firstFirstLesson = firstDetail.value.input.outline[0];
+    if (secondFirstLesson.type !== "lesson" || firstFirstLesson.type !== "lesson") throw new Error("fixture mismatch");
+    secondFirstLesson.items[0].id = firstFirstLesson.items[0].id;
+    const beforeVersion = secondDetail.value.course.version;
+    await expect(courses.saveDraft(admin.sessionToken, second.value.courseId, second.value.revisionId, beforeVersion, secondDetail.value.input)).resolves.toMatchObject({
+      ok: false,
+      code: "validation",
+      fieldIssues: [expect.objectContaining({ path: "outline" })],
+    });
+    const afterRejected = await courses.loadAdministration(admin.sessionToken, second.value.courseId);
+    expect(afterRejected.ok && afterRejected.value.course.version).toBe(beforeVersion);
+
+    await approve(admin.sessionToken, first.value.revisionId, 2);
+    await expect(courses.publish(admin.sessionToken, first.value.courseId, first.value.revisionId, 2)).resolves.toMatchObject({ ok: true });
+    const publishedDetail = await courses.loadAdministration(admin.sessionToken, first.value.courseId);
+    if (!publishedDetail.ok) throw new Error(publishedDetail.message);
+    publishedDetail.value.input.title = "Forked draft";
+    const fork = await courses.saveDraft(admin.sessionToken, first.value.courseId, first.value.revisionId, 2, publishedDetail.value.input);
+    expect(fork).toMatchObject({ ok: true, value: { revisionNumber: 2, version: 1 } });
+    if (!fork.ok) throw new Error(fork.message);
+    const forkRows = await pool.query<{ id: string }>(
+      `SELECT id FROM course_groups WHERE revision_id = $1
+       UNION ALL SELECT id FROM course_lessons WHERE revision_id = $1
+       UNION ALL SELECT id FROM lesson_items WHERE revision_id = $1
+       UNION ALL SELECT id FROM quiz_questions WHERE revision_id = $1
+       UNION ALL SELECT id FROM quiz_options WHERE revision_id = $1`,
+      [fork.value.revisionId],
+    );
+    expect(forkRows.rows.every((row) => !firstIds.includes(row.id))).toBe(true);
+    const forkPrerequisites = await pool.query<{ invalid: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1 FROM lesson_prerequisites p
+         LEFT JOIN course_lessons l ON l.id = p.lesson_id AND l.revision_id = p.revision_id
+         LEFT JOIN course_lessons prerequisite ON prerequisite.id = p.prerequisite_lesson_id AND prerequisite.revision_id = p.revision_id
+         WHERE p.revision_id = $1 AND (l.id IS NULL OR prerequisite.id IS NULL)
+       ) AS invalid`,
+      [fork.value.revisionId],
+    );
+    expect(forkPrerequisites.rows[0].invalid).toBe(false);
+  });
+
+  it("retains hidden authoring nodes while omitting effectively hidden content from preview and publication", async () => {
+    const admin = await createAdministrator();
+    const input = validCourse();
+    const opening = input.outline[0];
+    const group = input.outline[1];
+    const closing = input.outline[2];
+    if (opening.type !== "lesson" || group.type !== "group" || closing.type !== "lesson") throw new Error("fixture mismatch");
+    opening.items.push({ type: "topic", title: "Hidden item", summary: "Hidden item summary", body: "Hidden item body", hidden: true });
+    group.hidden = true;
+    closing.prerequisiteKeys = ["opening"];
+    const created = await courses.createCourse(admin.sessionToken, input);
+    if (!created.ok) throw new Error(created.message);
+
+    const detail = await courses.loadAdministration(admin.sessionToken, created.value.courseId);
+    if (!detail.ok) throw new Error(detail.message);
+    expect(detail.value.input.outline[1]).toMatchObject({ type: "group", hidden: true });
+    const adminOpening = detail.value.input.outline[0];
+    if (adminOpening.type !== "lesson") throw new Error("fixture mismatch");
+    expect(adminOpening.items.some((item) => item.hidden)).toBe(true);
+
+    const preview = await courses.preview(admin.sessionToken, created.value.courseId, created.value.revisionId);
+    if (!preview.ok) throw new Error(preview.message);
+    expect(preview.value.outline.map((node) => node.title)).toEqual(["Opening lesson", "Closing lesson"]);
+    expect(preview.value.outline[0].lessons[0].items.map((item) => item.title)).toEqual(["Opening topic"]);
+    expect(created.value.publicationBlockers).toEqual([]);
+    await approve(admin.sessionToken, created.value.revisionId, 1);
+    await expect(courses.publish(admin.sessionToken, created.value.courseId, created.value.revisionId, 1)).resolves.toMatchObject({ ok: true });
+  });
+
+  it("saves bounded empty draft fields and blocks publication with structured issues", async () => {
+    const admin = await createAdministrator();
+    const input = validCourse();
+    input.title = "";
+    input.summary = "";
+    input.cover.alt = "";
+    input.source.title = "";
+    input.source.attribution = "";
+    const first = input.outline[0];
+    if (first.type !== "lesson") throw new Error("fixture mismatch");
+    first.title = "";
+    first.summary = "";
+    first.items = [];
+    const created = await courses.createCourse(admin.sessionToken, input);
+    expect(created).toMatchObject({ ok: true });
+    if (!created.ok) throw new Error(created.message);
+    expect(created.value.publicationBlockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: "title" }),
+      expect.objectContaining({ message: "Every visible lesson requires at least one visible item." }),
+    ]));
+    await approve(admin.sessionToken, created.value.revisionId, 1);
+    await expect(courses.publish(admin.sessionToken, created.value.courseId, created.value.revisionId, 1)).resolves.toMatchObject({
+      ok: false,
+      code: "validation",
+      publicationBlockers: expect.arrayContaining([expect.objectContaining({ path: "title" })]),
+    });
+  });
+
   it("reports current-version governance blockers and immutable lifecycle history to administration", async () => {
     const admin = await createAdministrator();
     const created = await courses.createCourse(admin.sessionToken, validCourse());
@@ -257,25 +398,39 @@ describe("revisioned course and governance core", () => {
     expect(prerequisites.rows.map((row) => row.origin)).toEqual(["custom", "custom", "sequential"]);
   });
 
-  it("rejects cycles, orphan prerequisites, and zero required-item denominators", async () => {
+  it("persists safe incomplete drafts while reporting publication blockers", async () => {
     const admin = await createAdministrator();
     const cycle = validCourse();
     const opening = cycle.outline[0];
     if (opening.type !== "lesson") throw new Error("fixture mismatch");
     opening.prerequisiteKeys = ["closing"];
-    await expect(courses.createCourse(admin.sessionToken, cycle)).resolves.toMatchObject({ ok: false, code: "validation" });
+    const cycleDraft = await courses.createCourse(admin.sessionToken, cycle);
+    expect(cycleDraft).toMatchObject({ ok: true });
+    if (!cycleDraft.ok) throw new Error(cycleDraft.message);
+    expect(cycleDraft.value.publicationBlockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ message: "Lesson prerequisites must be acyclic." }),
+    ]));
 
     const orphan = validCourse();
     const closing = orphan.outline[2];
     if (closing.type !== "lesson") throw new Error("fixture mismatch");
     closing.prerequisiteKeys = ["missing"];
-    await expect(courses.createCourse(admin.sessionToken, orphan)).resolves.toMatchObject({ ok: false, code: "validation" });
+    await expect(courses.createCourse(admin.sessionToken, orphan)).resolves.toMatchObject({
+      ok: false,
+      code: "validation",
+      fieldIssues: [expect.objectContaining({ path: "outline.2.prerequisiteKeys.0" })],
+    });
 
     const zero = validCourse();
     const first = zero.outline[0];
     if (first.type !== "lesson") throw new Error("fixture mismatch");
     first.items = first.items.map((item) => ({ ...item, required: false }));
-    await expect(courses.createCourse(admin.sessionToken, zero)).resolves.toMatchObject({ ok: false, code: "validation" });
+    const zeroDraft = await courses.createCourse(admin.sessionToken, zero);
+    expect(zeroDraft).toMatchObject({ ok: true });
+    if (!zeroDraft.ok) throw new Error(zeroDraft.message);
+    expect(zeroDraft.value.publicationBlockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ message: "Every visible lesson requires at least one visible Required item." }),
+    ]));
   });
 
   it("validates and persists purpose-built meditation and quiz policy metadata", async () => {
@@ -364,10 +519,12 @@ describe("revisioned course and governance core", () => {
       mediaUri: "https://media.example.test/audio.mp3",
       attribution: "Audio source attribution",
     };
-    await expect(courses.createCourse(admin.sessionToken, missingAudioMetadata)).resolves.toMatchObject({
-      ok: false,
-      code: "validation",
-    });
+    const incompleteMedia = await courses.createCourse(admin.sessionToken, missingAudioMetadata);
+    expect(incompleteMedia).toMatchObject({ ok: true });
+    if (!incompleteMedia.ok) throw new Error(incompleteMedia.message);
+    expect(incompleteMedia.value.publicationBlockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ message: "Media meditation requires media, transcript, and direct fallback." }),
+    ]));
 
     const invalidQuiz = validCourse();
     const invalidQuizGroup = invalidQuiz.outline[1];
@@ -375,7 +532,12 @@ describe("revisioned course and governance core", () => {
     const quizItem = invalidQuizGroup.lessons[0].items[1];
     if (quizItem.type !== "quiz") throw new Error("fixture mismatch");
     quizItem.questions[0].options[1].correct = true;
-    await expect(courses.createCourse(admin.sessionToken, invalidQuiz)).resolves.toMatchObject({ ok: false, code: "validation" });
+    const incompleteQuiz = await courses.createCourse(admin.sessionToken, invalidQuiz);
+    expect(incompleteQuiz).toMatchObject({ ok: true });
+    if (!incompleteQuiz.ok) throw new Error(incompleteQuiz.message);
+    expect(incompleteQuiz.value.publicationBlockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ message: "Quiz correct-option rules are invalid." }),
+    ]));
   });
 
   it("enforces relational same-revision prerequisite ownership", async () => {
@@ -479,9 +641,12 @@ describe("revisioned course and governance core", () => {
     const invalidCover = validCourse();
     invalidCover.cover = { kind: "uploaded", uri: "not-a-url", alt: "Alt", provenance: "Source" };
     await expect(courses.createCourse(admin.sessionToken, invalidCover)).resolves.toMatchObject({ ok: false, code: "validation" });
-    const invalidSource = validCourse();
-    invalidSource.source.attribution = "";
-    await expect(courses.createCourse(admin.sessionToken, invalidSource)).resolves.toMatchObject({ ok: false, code: "validation" });
+    const incompleteSource = validCourse();
+    incompleteSource.source.attribution = "";
+    const incompleteSourceDraft = await courses.createCourse(admin.sessionToken, incompleteSource);
+    expect(incompleteSourceDraft).toMatchObject({ ok: true });
+    if (!incompleteSourceDraft.ok) throw new Error(incompleteSourceDraft.message);
+    expect(incompleteSourceDraft.value.publicationBlockers).toContainEqual(expect.objectContaining({ path: "source.attribution" }));
 
     const uploaded = validCourse();
     uploaded.cover = {

@@ -6,7 +6,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { courseId } = await params; const crossOrigin = rejectAdminCrossOrigin(request); if (crossOrigin) return crossOrigin;
   if (!isAdminIdentifier(courseId)) return adminRedirect(request, "/admin/courses?result=error");
   const form = await request.formData(); const revisionId = adminFormValue(form, "revisionId");
+  const version = Number(adminFormValue(form, "version"));
+  if (!isAdminIdentifier(revisionId) || !Number.isSafeInteger(version) || version < 1) return adminRedirect(request, `/admin/courses/${courseId}?result=error`);
   let input: unknown; try { input = JSON.parse(adminFormValue(form, "payload")); } catch { return adminRedirect(request, `/admin/courses/${courseId}?result=error`); }
-  const { service, sessionToken } = await adminCourseRequest(); const result = await service.saveDraft(sessionToken, courseId, revisionId, Number(adminFormValue(form, "version")), input);
+  const { service, sessionToken } = await adminCourseRequest(); const result = await service.saveDraft(sessionToken, courseId, revisionId, version, input);
   return adminRedirect(request, `/admin/courses/${courseId}?result=${result.ok ? "saved" : result.code === "conflict" ? "conflict" : "error"}`);
 }
